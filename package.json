@@ -1,0 +1,15 @@
+{
+  "name": "my-fullstack-app",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:frontend": "npm --workspace apps/frontend run dev",
+    "dev:backend": "npm --workspace apps/backend run start:dev",
+    "dev": "next dev -p 3001"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
+}
