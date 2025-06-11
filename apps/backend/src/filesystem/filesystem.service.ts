@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Injectable } from '@nestjs/common';
 
 export interface FileNode {
   name: string;
@@ -24,5 +24,10 @@ export class FilesystemService {
     }
 
     return info;
+  }
+
+  saveStructureToFile(basePath: string, outputPath: string): void {
+    const structure = this.getStructure(basePath);
+    fs.writeFileSync(outputPath, JSON.stringify(structure, null, 2), 'utf-8');
   }
 }

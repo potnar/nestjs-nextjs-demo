@@ -12,3 +12,10 @@ model User {
   name  String
   email String @unique
 }
+
+model WeightEntry {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  weight    Float
+  createdAt DateTime @default(now())
+}
