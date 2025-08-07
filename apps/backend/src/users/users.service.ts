@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -10,7 +11,10 @@ export class UsersService {
     return this.prisma.user.findMany();
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
+    if (!id) {
+      throw new NotFoundException('User ID is required');
+    }
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
@@ -22,9 +26,19 @@ export class UsersService {
     return user;
   }
 
-  async create(dto: CreateUserDto) {
+  async create(id: string, dto: CreateUserDto) {
     return this.prisma.user.create({
-      data: dto,
+      data: {
+        id,
+        name: dto.name,
+        email: dto.email,
+      },
+    }) as Promise<User>;
+  }
+
+  async remove(id: string) {
+    return this.prisma.user.delete({
+      where: { id },
     });
   }
 }
