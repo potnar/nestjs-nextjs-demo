@@ -4,6 +4,9 @@ import { tiles } from '@/data/tiles';
 export default function HomePage() {
   return (
     <div className="p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="col-span-full">
+        <h1 className="text-2xl font-bold">Ver 0.2</h1>
+      </div>
       {tiles.map(({ href, title, description }) => (
         <Link
           key={href}
@@ -12,6 +15,7 @@ export default function HomePage() {
         >
           <h2 className="text-lg font-bold mb-2">{title}</h2>
           <p className="text-sm text-gray-600">{description}</p>
+
         </Link>
       ))}
     </div>
