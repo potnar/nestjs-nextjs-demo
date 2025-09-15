@@ -1,0 +1,42 @@
+{
+  "lab": {
+    "title": "Three Lab – wizualne przykłady",
+    "subtitle": "Wybierz przykład i eksperymentuj z kontrolkami.",
+    "examplesLabel": "Przykłady",
+    "examplesPlaceholder": "Wybierz przykład",
+    "examplesAria": "Wybierz przykład do wyświetlenia"
+  },
+    "example": {
+      "minimal": "Minimal: PBR + OrbitControls",
+      "raycast": "Interakcja: Raycasting",
+      "shader": "Shader: animowany gradient"
+    },
+    "tips": {
+      "extend": "Jak to rozszerzać?"
+    },
+    "material": {
+      "settings": "Ustawienia materiału",
+      "metalness": "Metalness",
+      "roughness": "Roughness",
+      "toggleOn": "Włącz wireframe",
+      "toggleOff": "Wyłącz wireframe"
+    },
+    "raycast": {
+      "title": "Raycasting",
+      "click": "Kliknij sześcian, aby go zaznaczyć.",
+      "none": "nic nie wybrano",
+      "hint": "Pod maską: Raycaster → intersectObjects → pierwszy trafiony mesh."
+    },
+    "home": { "version": "Wersja {ver}" },
+    "tiles": {
+      "weight": {
+        "title": "Monitorowanie wagi",
+        "desc": "Zapisuj wagę i śledź wykres"
+      },
+      "interview": {
+        "title": "Przygotowanie do rozmowy",
+        "desc": "Pytania i wizualne przykłady: Three.js, React, Next.js, NestJS"
+      }
+    }
+  }
+  

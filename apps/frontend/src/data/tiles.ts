@@ -1,23 +1,6 @@
-export interface Tile {
-  href: string;
-  title: string;
-  description: string;
+export function makeTiles(locale: "pl" | "en", t: (key: string) => string) {
+  return [
+    { href: "/weight",        title: `⚖️ ${t("tiles.weight.title")}`,     description: t("tiles.weight.desc") },
+    { href: "/interview-prep",title: `🎯 ${t("tiles.interview.title")}`,  description: t("tiles.interview.desc") },
+  ];
 }
-
-export const tiles: Tile[] = [
-  {
-    href: "/tree-demo",
-    title: "🧠 Rekursja vs Iteracja",
-    description: "Porównanie renderowania drzewa folderów",
-  },
-  {
-    href: "/filesystem",
-    title: "📁 Struktura folderów",
-    description: "Generuj i przeglądaj strukturę plików",
-  },
-  {
-    href: "/weight",
-    title: "⚖️ Monitorowanie wagi",
-    description: "Zapisuj wagę i śledź wykres",
-  },
-];
