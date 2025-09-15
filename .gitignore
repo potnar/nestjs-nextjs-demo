@@ -11,6 +11,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+#testy
+
+/backend/data.sql
+
 # env
 .env*
 .env.local
