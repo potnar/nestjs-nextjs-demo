@@ -2,7 +2,7 @@
 
 import { formatDate } from '@/utils/formatDate';
 import type { TooltipProps } from 'recharts';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     LineChart,
     Line,
@@ -96,14 +96,12 @@ export default function WeightPage() {
                 setTotal(result.total);
             })
             .catch(console.error);
-
-
     }, [page, limit]);
 
     const addEntry = async () => {
         if (!weight) return;
 
-        const existing = entries.find(e => e.date === date);
+        const existing = allEntries.some(e => e.date === date);
         if (existing) {
             alert('Wpis dla tej daty już istnieje.');
             return;
@@ -111,18 +109,36 @@ export default function WeightPage() {
 
         const newEntry = { date, weight: parseFloat(weight) };
 
-        await fetch('http://localhost:3001/weight', {
+        let saved: Entry = newEntry;
+        try {
+            const res = await fetch('http://localhost:3001/weight', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newEntry),
         });
 
-        const updated = [...entries, newEntry].sort((a, b) =>
-            new Date(a.date).getTime() - new Date(b.date).getTime()
-        );
-        setEntries(updated);
-        setWeight('');
+        if (res.ok) {
+            const body = await res.json().catch(() => null);
+            if (body && (body.id || body.date)) saved = { ...newEntry, ...body };
+          } else {
+            // fallback tymczasowy id (np. do czasu kolejnego refetch)
+            saved = { ...newEntry, id: `${newEntry.date}-${newEntry.weight}` };
+          }
+        }catch{
+            saved = { ...newEntry, id: `${newEntry.date}-${newEntry.weight}` };
+        }
+        setEntries(prev =>
+            [...prev, saved].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          );
+        
+          // dane do wykresu — rosnąco po dacie (ważne!)
+          setAllEntries(prev =>
+            [...prev, saved].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          );
+        
+          setWeight("");
     };
+
 
     const deleteEntry = async (idToDelete: string) => {
         await fetch(`http://localhost:3001/weight/${idToDelete}`, {
@@ -130,9 +146,11 @@ export default function WeightPage() {
         });
 
         setEntries(prev => prev.filter(entry => entry.id !== idToDelete));
+        setAllEntries(prev => prev.filter(entry => entry.id !== idToDelete));
     };
 
-    const weeklyAverages = getWeeklyAverages(allEntries);
+    const weeklyAverages = useMemo(() => getWeeklyAverages(allEntries), [allEntries]);
+
 
     const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
         if (active && payload && payload.length) {
@@ -218,7 +236,7 @@ export default function WeightPage() {
                     <ul className="space-y-2">
                         {entries.map((entry, i) => (
                             <li
-                                key={entry.id}
+                            key={entry.id ?? `${entry.date}-${entry.weight}`}
                                 className="grid grid-cols-2 w-full items-center border-b pb-1"
                             >
                                 <span className="text-gray-700 flex items-center">
