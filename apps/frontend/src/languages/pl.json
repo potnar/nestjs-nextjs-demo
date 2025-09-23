@@ -6,28 +6,29 @@
     "examplesPlaceholder": "Wybierz przykład",
     "examplesAria": "Wybierz przykład do wyświetlenia"
   },
-    "example": {
-      "minimal": "Minimal: PBR + OrbitControls",
-      "raycast": "Interakcja: Raycasting",
-      "shader": "Shader: animowany gradient"
-    },
-    "tips": {
-      "extend": "Jak to rozszerzać?"
-    },
-    "material": {
-      "settings": "Ustawienia materiału",
-      "metalness": "Metalness",
-      "roughness": "Roughness",
-      "toggleOn": "Włącz wireframe",
-      "toggleOff": "Wyłącz wireframe"
-    },
-    "raycast": {
-      "title": "Raycasting",
-      "click": "Kliknij sześcian, aby go zaznaczyć.",
-      "none": "nic nie wybrano",
-      "hint": "Pod maską: Raycaster → intersectObjects → pierwszy trafiony mesh."
-    },
-    "home": { "version": "Wersja {ver}" },
+  "example": {
+    "minimal": "Minimal: PBR + OrbitControls",
+    "raycast": "Interakcja: Raycasting",
+    "shader": "Shader: animowany gradient"
+  },
+  "tips": {
+    "extend": "Jak to rozszerzać?"
+  },
+  "material": {
+    "settings": "Ustawienia materiału",
+    "metalness": "Metalness",
+    "roughness": "Roughness",
+    "toggleOn": "Włącz wireframe",
+    "toggleOff": "Wyłącz wireframe"
+  },
+  "raycast": {
+    "title": "Raycasting",
+    "click": "Kliknij sześcian, aby go zaznaczyć.",
+    "none": "nic nie wybrano",
+    "hint": "Pod maską: Raycaster → intersectObjects → pierwszy trafiony mesh."
+  },
+  "home": { 
+    "version": "Wersja {ver}",
     "tiles": {
       "weight": {
         "title": "Monitorowanie wagi",
@@ -38,5 +39,20 @@
         "desc": "Pytania i wizualne przykłady: Three.js, React, Next.js, NestJS"
       }
     }
+  },
+  "interview-prep":{
+    "recursion": {
+      "title": "Rekursja vs iteracja",
+      "desc": "Porównaj renderowanie drzewa folderów"
+    },
+    "filesystem": {
+      "title": "Struktura folderów",
+      "desc": "Generuj i przeglądaj drzewo plików"
+    },
+    "three": {
+      "title": "Three.js lab",
+      "desc": "Wypróbuj przykłady 3D i interakcje"
+    }
   }
+}
   

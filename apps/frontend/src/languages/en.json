@@ -6,28 +6,29 @@
     "examplesPlaceholder": "Select an example",
     "examplesAria": "Select an example to display"
   },
-    "example": {
-      "minimal": "Minimal: PBR + OrbitControls",
-      "raycast": "Interaction: Raycasting",
-      "shader": "Shader: animated gradient"
-    },
-    "tips": {
-      "extend": "How to extend?"
-    },
-    "material": {
-      "settings": "Material settings",
-      "metalness": "Metalness",
-      "roughness": "Roughness",
-      "toggleOn": "Enable wireframe",
-      "toggleOff": "Disable wireframe"
-    },
-    "raycast": {
-      "title": "Raycasting",
-      "click": "Click a cube to select it.",
-      "none": "nothing selected",
-      "hint": "Under the hood: Raycaster → intersectObjects → first hit."
-    },
-    "home": { "version": "Version {ver}" },
+  "example": {
+    "minimal": "Minimal: PBR + OrbitControls",
+    "raycast": "Interaction: Raycasting",
+    "shader": "Shader: animated gradient"
+  },
+  "tips": {
+    "extend": "How to extend?"
+  },
+  "material": {
+    "settings": "Material settings",
+    "metalness": "Metalness",
+    "roughness": "Roughness",
+    "toggleOn": "Enable wireframe",
+    "toggleOff": "Disable wireframe"
+  },
+  "raycast": {
+    "title": "Raycasting",
+    "click": "Click a cube to select it.",
+    "none": "nothing selected",
+    "hint": "Under the hood: Raycaster → intersectObjects → first hit."
+  },
+  "home": {
+    "version": "Version {ver}",
     "tiles": {
       "weight": {
         "title": "Weight tracking",
@@ -37,6 +38,21 @@
         "title": "Interview prep",
         "desc": "Questions and visual examples: Three.js, React, Next.js, NestJS"
       }
-   }
+    }
+  },
+  "interview-prep": {
+    "recursion": {
+      "title": "Recursion vs iteration",
+      "desc": "Compare folder-tree rendering"
+    },
+    "filesystem": {
+      "title": "Folder structure",
+      "desc": "Generate and browse the file tree"
+    },
+    "three": {
+      "title": "Three.js lab",
+      "desc": "Try 3D examples and interactions"
+    }
   }
+}
   

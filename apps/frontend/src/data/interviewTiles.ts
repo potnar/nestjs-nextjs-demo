@@ -1,25 +1,19 @@
-export interface Tile {
-    href: string;
-    title: string;
-    description: string;
-  }
-  
-  export const tiles: Tile[] = [
+export function makeTiles(locale: "pl" | "en", t: (key: string) => string) {
+  return [
     {
       href: "/interview-prep/tree-demo",
-      title: "🧠 Rekursja vs Iteracja",
-      description: "Porównanie renderowania drzewa folderów",
+      title: `🧠 ${t("interview-prep.recursion.title")}`,
+      description: t("interview-prep.recursion.desc"),
     },
     {
       href: "/interview-prep/filesystem",
-      title: "📁 Struktura folderów",
-      description: "Generuj i przeglądaj strukturę plików",
+      title: `📁 ${t("interview-prep.filesystem.title")}`,
+      description: t("interview-prep.filesystem.desc"),
     },
     {
-        href: "/interview-prep/threejs",
-        title: "🌀 Three.js – przykłady",
-        description: "Eksperymentuj z grafiką 3D i interakcjami w przeglądarce",
-      }
-      
+      href: "/interview-prep/threejs",
+      title: `🌀 ${t("interview-prep.three.title")}`,
+      description: t("interview-prep.three.desc"),
+    },
   ];
-  
+}

@@ -1,9 +1,16 @@
-import Link from 'next/link';
-import { tiles } from '@/data/interviewTiles';
+"use client"
+
+import {Link} from "@/i18n/navigation"; 
+import {useLocale, useTranslations} from "next-intl";
+import {makeTiles} from "@/data/interviewTiles";
 
 export default function InterviewPrepPage() {
+  const locale = useLocale() as "pl" | "en";
+  const t = useTranslations();
+  const tiles = makeTiles(locale, (k) => t(k));
+
   return (
-    <div className="p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+    <div key={locale} className="p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
       <div className="col-span-full">
         <h1 className="text-2xl font-bold">Ver 0.2</h1>
       </div>
