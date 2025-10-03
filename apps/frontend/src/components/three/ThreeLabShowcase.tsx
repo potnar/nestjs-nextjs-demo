@@ -10,14 +10,15 @@ import {
   SelectContent,
   SelectItem
 } from "@/components/ui/select";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import type { ExampleKey } from "./examples";
 
 const Minimal = dynamic(() => import("./examples/Minimal"), { ssr: false });
 const Raycast  = dynamic(() => import("./examples/Raycast"),  { ssr: false });
-const Shader   = dynamic(() => import("./examples/Shader"),   { ssr: false });
+const Shader   = dynamic(() => import("./examples/Shader/index"),   { ssr: false });
+const Instanced = dynamic(() => import("./examples/Instanced"), { ssr: false });
+const LOD = dynamic(() => import("./examples/LOD"), { ssr: false });
 
-const EXAMPLE_KEYS: ExampleKey[] = ["minimal", "raycast", "shader"];
+const EXAMPLE_KEYS: ExampleKey[] = ["minimal", "raycast", "shader", "instanced", "LOD"];
 
 export default function ThreeLabShowcase() {
   const t = useTranslations();
@@ -27,6 +28,8 @@ export default function ThreeLabShowcase() {
     switch (key) {
       case "raycast": return Raycast;
       case "shader":  return Shader;
+      case "instanced": return Instanced;
+      case "LOD": return LOD;
       default:        return Minimal;
     }
   }, [key]);
@@ -70,7 +73,7 @@ export default function ThreeLabShowcase() {
         </motion.div>
       </AnimatePresence>
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>{t("tips.extend")}</CardTitle>
         </CardHeader>
@@ -81,7 +84,7 @@ export default function ThreeLabShowcase() {
             <li><b>Fizyka</b>: cannon-es</li>
           </ul>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }
