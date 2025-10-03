@@ -9,14 +9,13 @@ type Ctx = {
   renderer: THREE.WebGLRenderer;
   controls: OrbitControls;
 };
-
 type BuildResult = { onFrame?: (dt: number, t: number) => void; dispose?: () => void } | void;
 type Build = (ctx: Ctx) => BuildResult;
 
 export function useThreeCanvas({ onBuild }: { onBuild: Build }) {
   const mountRef = useRef<HTMLDivElement | null>(null);
 
-  // trzymamy onBuild w refie, aktualizujemy osobnym efektem
+  // przechowujemy aktualne onBuild
   const onBuildRef = useRef<Build | null>(null);
   useEffect(() => {
     onBuildRef.current = onBuild;
@@ -45,7 +44,6 @@ export function useThreeCanvas({ onBuild }: { onBuild: Build }) {
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
 
-    // używamy aktualnej funkcji z refa — bez dodawania onBuild do deps
     const built = onBuildRef.current?.({ scene, camera, renderer, controls }) ?? {};
     state.current.onFrame = built.onFrame;
     state.current.dispose = built.dispose;
@@ -71,13 +69,17 @@ export function useThreeCanvas({ onBuild }: { onBuild: Build }) {
     };
     state.current.raf = requestAnimationFrame(loop);
 
+    // 👇 złap aktualne wartości do lokalnych zmiennych użytych w cleanupie
+    const rafIdAtMount = state.current.raf;
+    const disposeAtMount = state.current.dispose;
+    const domAtMount = renderer.domElement;
+
     return () => {
-      if (state.current.raf) cancelAnimationFrame(state.current.raf);
+      if (rafIdAtMount) cancelAnimationFrame(rafIdAtMount);
       ro.disconnect();
       controls.dispose();
-      state.current.dispose?.();
+      disposeAtMount?.();
 
-      // bez `any`: sprzątanie tylko dla Meshy
       scene.traverse((obj: THREE.Object3D) => {
         if ((obj as THREE.Mesh).isMesh) {
           const mesh = obj as THREE.Mesh;
@@ -89,9 +91,9 @@ export function useThreeCanvas({ onBuild }: { onBuild: Build }) {
       });
 
       renderer.dispose();
-      mount.removeChild(renderer.domElement);
+      if (domAtMount.parentElement) domAtMount.parentElement.removeChild(domAtMount);
     };
-  }, []); // <- celowo pusto: nie przebudowujemy sceny gdy zmienia się onBuild
+  }, []); // nie przebudowujemy sceny przy zmianie onBuild
 
   return mountRef;
 }
