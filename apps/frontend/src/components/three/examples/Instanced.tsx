@@ -54,7 +54,7 @@ export default function InstancedExample() {
       camera.lookAt(0, 4, 0);
 
       // --- state for current build ---
-      let instanced: THREE.InstancedMesh | null = null;
+      let instanced: THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material> | null = null;
       let naiveMeshes: THREE.Mesh[] = [];
       let geometry: THREE.ConeGeometry | null = null;
       let material: THREE.MeshStandardMaterial | null = null;
@@ -129,7 +129,9 @@ export default function InstancedExample() {
               c.setHSL((i / N) * 0.33 + 0.33, 0.55, 0.45);
               instanced.setColorAt(i, c);
             }
-            (instanced.instanceColor as any).needsUpdate = true;
+            if (instanced.instanceColor) {
+              instanced.instanceColor.needsUpdate = true; // ✅ bez any
+            }
           }
 
           for (let i = 0; i < N; i++) {
@@ -154,8 +156,7 @@ export default function InstancedExample() {
           scene.add(...naiveMeshes);
         }
 
-        // szacunek trójkątów: ConeGeometry(0.5,2,8) ≈ 8*2*? ~ ~ 128 (luźny rząd wielkości)
-        // ale pokażmy porównawczo — ważniejsza jest liczba draw calls:
+        // szacunek trójkątów (orientacyjnie) + draw calls
         const trianglesPerConeApprox = 128;
         setEstTriangles(trianglesPerConeApprox * N + 2000 /* grid, itp. */);
         setEstCalls(
@@ -186,8 +187,6 @@ export default function InstancedExample() {
             needsRebuild.current = false;
           }
 
-         
-
           // animacja „wiatru”
           const amp = 0.12 * windRef.current;
           if (instanced) {
@@ -213,12 +212,11 @@ export default function InstancedExample() {
     },
   });
 
-  // sync refs with state
+  // sync refs with state (bez „gołych” wyrażeń)
   if (modeRef.current !== mode) { modeRef.current = mode; needsRebuild.current = true; }
-  // prettier-ignore
-  (windRef.current !== wind) && (windRef.current = wind);
-  (wireRef.current !== wireframe) && (wireRef.current = wireframe);
-  (cullRef.current !== culling) && (cullRef.current = culling);
+  if (windRef.current !== wind) { windRef.current = wind; }
+  if (wireRef.current !== wireframe) { wireRef.current = wireframe; }
+  if (cullRef.current !== culling) { cullRef.current = culling; }
   if (colorsRef.current !== instanceColors) { colorsRef.current = instanceColors; needsRebuild.current = true; }
 
   return (
@@ -238,23 +236,23 @@ export default function InstancedExample() {
         <CardContent className="space-y-5">
           <div className="flex gap-2">
             <div className="flex items-center gap-1">
-                <Button
+              <Button
                 variant={mode === "instanced" ? "default" : "secondary"}
                 onClick={() => { setMode("instanced"); modeRef.current = "instanced"; needsRebuild.current = true; }}
-                >
+              >
                 Instanced
-                </Button>
-                <HelpTip tKey="tooltips.mode_instanced" />
+              </Button>
+              <HelpTip tKey="tooltips.mode_instanced" />
             </div>
 
             <div className="flex items-center gap-1">
-                <Button
+              <Button
                 variant={mode === "naive" ? "default" : "secondary"}
                 onClick={() => { setMode("naive"); modeRef.current = "naive"; needsRebuild.current = true; }}
-                >
+              >
                 Naive
-                </Button>
-                <HelpTip tKey="tooltips.mode_naive" />
+              </Button>
+              <HelpTip tKey="tooltips.mode_naive" />
             </div>
           </div>
 
