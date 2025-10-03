@@ -1,5 +1,5 @@
-import { NextIntlClientProvider } from "next-intl";
 import Navbar from "@/components/nav/Navbar";
+import { NextIntlClientProvider } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { ReactNode } from "react";
 
@@ -12,7 +12,7 @@ type Props = {
 };
 
 export default async function LocaleLayout({ children, params }: Props) {
-  const { locale } = params; // ⬅️ JUŻ NIE await
+  const { locale } = params;
   setRequestLocale(locale);
 
   const messages: Messages = (await import(`@/languages/${locale}.json`)).default;
