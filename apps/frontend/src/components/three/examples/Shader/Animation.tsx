@@ -1,7 +1,7 @@
 "use client";
 import * as THREE from "three";
 import { useState } from "react";
-import { useThreeCanvas } from "../useThreeCanvas";
+import { useThreeCanvas } from "../../useThreeCanvas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 
@@ -24,7 +24,7 @@ void main() {
 }`;
 
 
-export default function ExampleShader() {
+export default function Animation() {
   const [speed, setSpeed] = useState<number>(1.0);
 
   const ref = useThreeCanvas({
