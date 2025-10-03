@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/accordion";
 
 type ClickInfo = { name: string; index: number } | null;
+// pomocniczy alias dla kostek
+type CubeMesh = THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>;
 
 export default function ExampleRaycastAdvanced() {
   const [selected, setSelected] = useState<ClickInfo>(null);
@@ -29,25 +31,30 @@ export default function ExampleRaycastAdvanced() {
   const [showModalOnClick, setShowModalOnClick] = useState<boolean>(true);
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
 
-  // aktualne wartości dostępne w zamrożonych handlerach
+  // aktualne wartości dostępne w handlerach
   const targetColorRef = useRef(targetColor);
   const showModalRef = useRef(showModalOnClick);
-  useEffect(() => void (targetColorRef.current = targetColor), [targetColor]);
-  useEffect(() => void (showModalRef.current = showModalOnClick), [showModalOnClick]);
+  useEffect(() => { targetColorRef.current = targetColor; }, [targetColor]);
+  useEffect(() => { showModalRef.current = showModalOnClick; }, [showModalOnClick]);
 
   const mouse = useMemo(() => new THREE.Vector2(), []);
 
-  // STABILNY onBuild — nie zmienia referencji między renderami
-  const onBuild = useCallback(({ scene, camera, renderer }: any) => {
+  // STABILNY onBuild — bez `any`
+  const onBuild = useCallback((
+    { scene, camera, renderer }: {
+      scene: THREE.Scene;
+      camera: THREE.PerspectiveCamera;
+      renderer: THREE.WebGLRenderer;
+    }
+  ) => {
     // Lights
     const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambient);
     const spot = new THREE.SpotLight(0xffffff, 1);
     spot.position.set(5, 8, 5);
-    scene.add(spot);
+    scene.add(ambient, spot);
 
     // Grid 3x3
-    const cubes: THREE.Mesh[] = [];
+    const cubes: CubeMesh[] = [];
     const geo = new THREE.BoxGeometry(1, 1, 1);
     let idx = 0;
     for (let x = -2; x <= 2; x += 2) {
@@ -56,16 +63,18 @@ export default function ExampleRaycastAdvanced() {
         const mat = new THREE.MeshStandardMaterial({
           color: new THREE.Color().setHSL(Math.random(), 0.6, 0.5),
         });
-        const m = new THREE.Mesh(geo, mat);
+        const m: CubeMesh = new THREE.Mesh(geo, mat);
         m.position.set(x, 0.5, z);
         m.name = `cube_${idx}`;
-        (m as any).__idx = idx;
+        // użyj wbudowanego userData zamiast castów any
+        m.userData.idx = idx;
         cubes.push(m);
         scene.add(m);
       }
     }
 
     const raycaster = new THREE.Raycaster();
+
     const onClick = (event: MouseEvent) => {
       const rect = (renderer.domElement as HTMLCanvasElement).getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -75,29 +84,38 @@ export default function ExampleRaycastAdvanced() {
       const hits = raycaster.intersectObjects(cubes, false);
       if (!hits[0]) return;
 
-      const obj = hits[0].object as THREE.Mesh;
-      const mat = obj.material as THREE.MeshStandardMaterial;
-
-      // Użyj aktualnego koloru z ref (NIE z props/state)
+      const obj = hits[0].object as CubeMesh;
+      const mat = obj.material;
+      // aktualny kolor z ref
       try {
         mat.color.set(targetColorRef.current);
       } catch {
-        /* ignorujemy zły hex */
+        // ignoruj niepoprawny hex
       }
 
-      const index = (obj as any).__idx as number | undefined;
-      setSelected({ name: obj.name, index: index ?? -1 });
+      const idxMaybe = obj.userData?.idx;
+      const index = typeof idxMaybe === "number" ? idxMaybe : -1;
+      setSelected({ name: obj.name, index });
 
       if (showModalRef.current) setDialogOpen(true);
     };
 
     renderer.domElement.addEventListener("click", onClick);
+
     return {
-      dispose: () => renderer.domElement.removeEventListener("click", onClick),
+      dispose: () => {
+        renderer.domElement.removeEventListener("click", onClick);
+        // sprzątanie: usuń obiekty, nie zwalniaj współdzielonej geo (jest na wielu Meshach)
+        for (const m of cubes) {
+          scene.remove(m);
+          m.material.dispose();
+          // geo współdzielona (geo) — nie dispose tutaj, jedno miejsce powinno być właścicielem
+        }
+        scene.remove(ambient, spot);
+      }
     };
   }, [mouse]);
 
-  // Stabilny obiekt opcji dla hooka (nie zmienia się przy każdym renderze)
   const canvasOpts = useMemo(() => ({ onBuild }), [onBuild]);
   const ref = useThreeCanvas(canvasOpts);
 
