@@ -71,7 +71,7 @@ export function useThreeCanvas({ onBuild }: { onBuild: Build }) {
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };
-  }, [onBuild]);
+  }, []);
 
   return mountRef;
 }
