@@ -3,18 +3,19 @@ import Navbar from "@/components/nav/Navbar";
 import { setRequestLocale } from "next-intl/server";
 import { ReactNode } from "react";
 
+type Locale = "pl" | "en";
+type Messages = Record<string, string>;
+
 type Props = {
   children: ReactNode;
-  params: { locale: "pl" | "en" };
+  params: { locale: Locale };
 };
 
 export default async function LocaleLayout({ children, params }: Props) {
-  const { locale } = params;
+  const { locale } = params; // ⬅️ JUŻ NIE await
   setRequestLocale(locale);
 
-  // 🟢 Zamiast `as any` użyjemy bezpiecznego typu dla JSON-a:
-  const messages = (await import(`@/languages/${locale}.json`))
-    .default as Record<string, string>;
+  const messages: Messages = (await import(`@/languages/${locale}.json`)).default;
 
   return (
     <NextIntlClientProvider key={locale} locale={locale} messages={messages}>
