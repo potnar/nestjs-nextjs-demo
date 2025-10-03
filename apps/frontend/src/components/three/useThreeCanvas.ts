@@ -9,14 +9,25 @@ type Ctx = {
   renderer: THREE.WebGLRenderer;
   controls: OrbitControls;
 };
-type Build = (ctx: Ctx) => { onFrame?: (dt: number, t: number) => void; dispose?: () => void } | void;
+
+type BuildResult = { onFrame?: (dt: number, t: number) => void; dispose?: () => void } | void;
+type Build = (ctx: Ctx) => BuildResult;
 
 export function useThreeCanvas({ onBuild }: { onBuild: Build }) {
   const mountRef = useRef<HTMLDivElement | null>(null);
-  const state = useRef<{ raf?: number; onFrame?: (dt: number, t: number) => void } | null>(null);
+
+  // trzymamy onBuild w refie, aktualizujemy osobnym efektem
+  const onBuildRef = useRef<Build | null>(null);
+  useEffect(() => {
+    onBuildRef.current = onBuild;
+  }, [onBuild]);
+
+  const state = useRef<{ raf?: number; onFrame?: (dt: number, t: number) => void; dispose?: () => void }>({});
 
   useEffect(() => {
-    const mount = mountRef.current!;
+    const mount = mountRef.current;
+    if (!mount) return;
+
     const w = mount.clientWidth || 800;
     const h = mount.clientHeight || 500;
 
@@ -27,51 +38,60 @@ export function useThreeCanvas({ onBuild }: { onBuild: Build }) {
     camera.position.set(3, 2, 5);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(w, h);
+    renderer.setPixelRatio(Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1, 2));
+    renderer.setSize(w, h, false);
     mount.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
 
-    const built = onBuild?.({ scene, camera, renderer, controls }) || {};
-    const onFrame = built.onFrame;
+    // używamy aktualnej funkcji z refa — bez dodawania onBuild do deps
+    const built = onBuildRef.current?.({ scene, camera, renderer, controls }) ?? {};
+    state.current.onFrame = built.onFrame;
+    state.current.dispose = built.dispose;
 
     const handleResize = () => {
-      const W = mount.clientWidth, H = mount.clientHeight;
-      camera.aspect = W / H;
+      const W = mount.clientWidth || w;
+      const H = mount.clientHeight || h;
+      camera.aspect = W / H || 1;
       camera.updateProjectionMatrix();
-      renderer.setSize(W, H);
+      renderer.setSize(W, H, false);
     };
     const ro = new ResizeObserver(handleResize);
     ro.observe(mount);
 
     let last = performance.now();
-    const loop = () => {
-      const now = performance.now();
+    const loop = (now: number) => {
       const dt = (now - last) / 1000;
       last = now;
       controls.update();
-      onFrame?.(dt, now / 1000);
+      state.current.onFrame?.(dt, now / 1000);
       renderer.render(scene, camera);
-      state.current!.raf = requestAnimationFrame(loop);
+      state.current.raf = requestAnimationFrame(loop);
     };
-    state.current = { onFrame, raf: requestAnimationFrame(loop) };
+    state.current.raf = requestAnimationFrame(loop);
 
     return () => {
-      if (state.current?.raf) cancelAnimationFrame(state.current.raf);
+      if (state.current.raf) cancelAnimationFrame(state.current.raf);
       ro.disconnect();
       controls.dispose();
-      built.dispose?.();
-      scene.traverse((o: any) => {
-        o.geometry?.dispose?.();
-        if (Array.isArray(o.material)) o.material.forEach((m: any) => m?.dispose?.());
-        else o.material?.dispose?.();
+      state.current.dispose?.();
+
+      // bez `any`: sprzątanie tylko dla Meshy
+      scene.traverse((obj: THREE.Object3D) => {
+        if ((obj as THREE.Mesh).isMesh) {
+          const mesh = obj as THREE.Mesh;
+          mesh.geometry?.dispose();
+          const mat = mesh.material;
+          if (Array.isArray(mat)) mat.forEach((m: THREE.Material) => m.dispose());
+          else mat?.dispose?.();
+        }
       });
+
       renderer.dispose();
       mount.removeChild(renderer.domElement);
     };
-  }, []);
+  }, []); // <- celowo pusto: nie przebudowujemy sceny gdy zmienia się onBuild
 
   return mountRef;
 }
