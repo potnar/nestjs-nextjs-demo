@@ -9,7 +9,14 @@
   "example": {
     "minimal": "Minimal: PBR + OrbitControls",
     "raycast": "Interaction: Raycasting",
-    "shader": "Shader: animated gradient"
+    "shader": "Shader: animated gradient",
+    "instanced": "InstancedMesh: many objects",
+    "LOD": "LOD: levels of detail"
+  },
+  "tooltips": {
+    "instanceColors": "Give each copy its own color without new materials — in Instanced mode draw calls stay ≈ 1.",
+    "mode_instanced": "Instancing: many copies of the SAME geometry + material drawn with a single command (≈1 draw call per geo+material combo). Instead of 2000 'draw cone' commands, you send one: 'draw this cone 2000× with these transforms'.",
+    "mode_naive": "Each copy is a separate Mesh → ≈ N draw calls. Simpler, but slower at large N."
   },
   "tips": {
     "extend": "How to extend?"
@@ -52,6 +59,38 @@
     "three": {
       "title": "Three.js lab",
       "desc": "Try 3D examples and interactions"
+    }
+  },
+  "recursion": {
+    "title": "Recursion — live nesting builder",
+    "back": "Back",
+    "lead": "Build your own tree (files/directories) and step through recursion (preorder/postorder) and BFS.",
+    "actions": {
+      "newTree": "New tree",
+      "expandRoot": "Expand root only",
+      "expandAll": "Expand all",
+      "collapseAll": "Collapse all"
+    },
+    "traversal": {
+      "mode": "Traversal mode:",
+      "preorder": "Preorder",
+      "postorder": "Postorder",
+      "bfs": "BFS"
+    },
+    "controls": {
+      "start": "Start",
+      "pause": "Pause",
+      "step": "Step",
+      "reset": "Reset"
+    },
+    "explain": {
+      "title": "What’s happening?",
+      "stack": "Call stack"
+    },
+    "structure": {
+      "title": "Structure (JSON)",
+      "dirs": "dirs",
+      "files": "files"
     }
   }
 }

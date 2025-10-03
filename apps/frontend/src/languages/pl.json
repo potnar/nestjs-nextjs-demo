@@ -9,8 +9,16 @@
   "example": {
     "minimal": "Minimal: PBR + OrbitControls",
     "raycast": "Interakcja: Raycasting",
-    "shader": "Shader: animowany gradient"
+    "shader": "Shader: animowany gradient",
+    "instanced": "InstancedMesh: wiele obiektów",
+    "LOD": "LOD: różne poziomy szczegółowości"
   },
+  "tooltips": {
+  "instanceColors": "Kolor per instancja: każda kopia może mieć inny kolor, ale nadal renderujemy jednym draw callem (Instanced), bo kolor jest atrybutem, nie osobnym materiałem.",
+  "mode_instanced": "Instancing: wiele kopii tej SAMEJ geometrii i materiału rysowane jedną komendą (1 draw call na kombinację geo+materiał). Zamiast 2000 poleceń „narysuj stożek”, wysyłasz jedno: „narysuj ten stożek 2000× w tych transformacjach”.",
+  "mode_naive": "Każda kopia to osobny Mesh → ≈ N draw calls. Prostsze, ale wolniejsze przy dużym N.",
+  "lod_distance": "Odległość, od której zmienia się poziom szczegółowości (LOD)."
+},
   "tips": {
     "extend": "Jak to rozszerzać?"
   },
@@ -52,6 +60,38 @@
     "three": {
       "title": "Three.js lab",
       "desc": "Wypróbuj przykłady 3D i interakcje"
+    }
+  },
+  "recursion": {
+    "title": "Rekurencja — budowanie zagnieżdżeń na żywo",
+    "back": "Wróć",
+    "lead": "Zbuduj własne drzewo (pliki/katalogi), a potem zobacz krok po kroku jak działa rekurencja (preorder/postorder) i BFS.",
+    "actions": {
+      "newTree": "Nowe drzewo",
+      "expandRoot": "Rozwiń tylko root",
+      "expandAll": "Rozwiń wszystko",
+      "collapseAll": "Zwiń wszystko"
+    },
+    "traversal": {
+      "mode": "Tryb przechodzenia:",
+      "preorder": "Preorder",
+      "postorder": "Postorder",
+      "bfs": "BFS"
+    },
+    "controls": {
+      "start": "Start",
+      "pause": "Pauza",
+      "step": "Krok",
+      "reset": "Reset"
+    },
+    "explain": {
+      "title": "Co się dzieje?",
+      "stack": "Stos wywołań"
+    },
+    "structure": {
+      "title": "Struktura (JSON)",
+      "dirs": "katalogi",
+      "files": "pliki"
     }
   }
 }
