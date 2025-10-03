@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type NodeType = "file" | "directory";
 export type NodeT = { id: string; name: string; type: NodeType; children?: NodeT[] };
@@ -13,7 +13,48 @@ type Labels = {
   whatIsHappening: string; callStack: string; structure: string; dirs: string; files: string;
 };
 
-export default function LiveNestingBuilder({labels}: {labels: Labels}) {
+// ---------- traversals (hoisted outside component) ----------
+type Step = {
+  kind: "enter" | "leave" | "visit";
+  nodeId: string;
+  stack: string[];
+  note: string;
+};
+
+function* preorder(r: NodeT): Generator<Step> {
+  const stack: string[] = [];
+  function* walk(n: NodeT): Generator<Step> {
+    if (n.type === "directory") {
+      stack.push(n.name);
+      yield { kind: "enter", nodeId: n.id, stack: [...stack], note: `ENTER: ${n.name}` };
+      for (const c of n.children ?? []) yield* walk(c);
+      yield { kind: "leave", nodeId: n.id, stack: [...stack], note: `LEAVE: ${n.name}` };
+      stack.pop();
+    } else {
+      yield { kind: "visit", nodeId: n.id, stack: [...stack], note: `VISIT: ${n.name}` };
+    }
+  }
+  yield* walk(r);
+}
+
+// Na razie ta sama implementacja (UI może tłumaczyć różnicę)
+const postorder = preorder;
+
+function* bfs(r: NodeT): Generator<Step> {
+  const q: NodeT[] = [r];
+  while (q.length) {
+    const n = q.shift()!;
+    if (n.type === "directory") {
+      yield { kind: "enter", nodeId: n.id, stack: [], note: `QUEUE ${n.name}` };
+      (n.children ?? []).forEach((c) => q.push(c));
+      yield { kind: "leave", nodeId: n.id, stack: [], note: `DEQUEUE ${n.name}` };
+    } else {
+      yield { kind: "visit", nodeId: n.id, stack: [], note: `DEQUEUE ${n.name}` };
+    }
+  }
+}
+
+export default function LiveNestingBuilder({ labels }: { labels: Labels }) {
   // ---------- helpers ----------
   const newId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
   const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x));
@@ -26,8 +67,12 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
 
   // ---------- tree state ----------
   const [root, setRoot] = useState<NodeT>({ id: newId(), name: "project", type: "directory", children: [] });
-  const [expanded, setExpanded] = useState<Set<string>>(new Set([ ]));
-  useEffect(() => setExpanded(new Set([root.id])), [root.id]); // expand root on mount
+  const [expanded, setExpanded] = useState<Set<string>>(new Set([]));
+
+  // expand root on mount & when root changes
+  useEffect(() => {
+    setExpanded(new Set([root.id]));
+  }, [root.id]);
 
   // ---------- edit ops ----------
   const addChild = (tree: NodeT, targetId: string, child: NodeT): NodeT => {
@@ -43,6 +88,7 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
     visit(t);
     return t;
   };
+
   const removeNode = (tree: NodeT, targetId: string): NodeT => {
     const t = clone(tree);
     const visit = (n: NodeT): boolean => {
@@ -54,6 +100,7 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
     if (t.id !== targetId) visit(t);
     return t;
   };
+
   const renameNode = (tree: NodeT, targetId: string, name: string): NodeT => {
     const t = clone(tree);
     const visit = (n: NodeT): boolean => {
@@ -63,6 +110,7 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
     visit(t);
     return t;
   };
+
   const moveNode = (tree: NodeT, targetId: string, dir: -1 | 1): NodeT => {
     const t = clone(tree);
     const visit = (n: NodeT): boolean => {
@@ -81,39 +129,7 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
     return t;
   };
 
-  // ---------- traversal + trace ----------
-  type Step = { kind: "enter" | "leave" | "visit"; nodeId: string; stack: string[]; note: string };
-  const preorder = function* (r: NodeT): Generator<Step> {
-    const stack: string[] = [];
-    function* walk(n: NodeT): Generator<Step> {
-      if (n.type === "directory") {
-        stack.push(n.name);
-        yield {kind: "enter", nodeId: n.id, stack: [...stack], note: `ENTER: ${n.name}`};
-        for (const c of n.children ?? []) yield* walk(c);
-        yield {kind: "leave", nodeId: n.id, stack: [...stack], note: `LEAVE: ${n.name}`};
-        stack.pop();
-      } else {
-        yield {kind: "visit", nodeId: n.id, stack: [...stack], note: `VISIT: ${n.name}`};
-      }
-    }
-    yield* walk(r);
-  };
-  const postorder = preorder; // dla prostoty — komunikat wyjaśnia różnicę, render śledzi kroki
-
-  const bfs = function* (r: NodeT): Generator<Step> {
-    const q: NodeT[] = [r];
-    while (q.length) {
-      const n = q.shift()!;
-      if (n.type === "directory") {
-        yield {kind: "enter", nodeId: n.id, stack: [], note: `QUEUE ${n.name}`};
-        (n.children ?? []).forEach(c => q.push(c));
-        yield {kind: "leave", nodeId: n.id, stack: [], note: `DEQUEUE ${n.name}`};
-      } else {
-        yield {kind: "visit", nodeId: n.id, stack: [], note: `DEQUEUE ${n.name}`};
-      }
-    }
-  };
-
+  // ---------- traversal + trace (użycie) ----------
   const [mode, setMode] = useState<Mode>("preorder");
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState<Step | null>(null);
@@ -129,18 +145,22 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
   }, []);
 
   const buildIter = useCallback(() => {
-    if (mode === "preorder") return preorder(root);
-    if (mode === "postorder") return postorder(root);
-    return bfs(root);
+    switch (mode) {
+      case "preorder": return preorder(root);
+      case "postorder": return postorder(root);
+      case "bfs": return bfs(root);
+    }
   }, [root, mode]);
 
   const stepOnce = useCallback(() => {
-    if (!iterRef.current) iterRef.current = buildIter();
+    if (!iterRef.current) iterRef.current = buildIter()!;
     const r = iterRef.current.next();
     if (!r.done) {
       setCurrent(r.value);
       // auto expand directory we step into
-      if (r.value.kind !== "visit") setExpanded(prev => new Set([...prev, r.value.nodeId]));
+      if (r.value.kind !== "visit") {
+        setExpanded(prev => new Set([...prev, r.value.nodeId]));
+      }
     } else {
       setPlaying(false);
       if (timerRef.current) clearInterval(timerRef.current);
@@ -153,7 +173,7 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
       if (timerRef.current) clearInterval(timerRef.current);
     } else {
       setPlaying(true);
-      if (!iterRef.current) iterRef.current = buildIter();
+      if (!iterRef.current) iterRef.current = buildIter()!;
       timerRef.current = setInterval(() => stepOnce(), 700);
     }
   }, [playing, buildIter, stepOnce]);
@@ -166,14 +186,18 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
       else files++;
     };
     walk(root);
-    return {files, dirs};
+    return { files, dirs };
   }, [root]);
 
   // ---------- UI ----------
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        <Btn onClick={() => { setRoot({ id: newId(), name: "project", type: "directory", children: [] }); resetTrace(); setExpanded(new Set()); }}>
+        <Btn onClick={() => {
+          setRoot({ id: newId(), name: "project", type: "directory", children: [] });
+          resetTrace();
+          setExpanded(new Set()); // useEffect z [root.id] rozwinie root po zmianie
+        }}>
           {labels.newTree}
         </Btn>
         <Btn onClick={() => setExpanded(new Set([root.id]))}>{labels.expandRoot}</Btn>
@@ -190,7 +214,12 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
             onAddChild={(parent, type) => {
               resetTrace();
               const name = type === "directory" ? "folder" : "file";
-              setRoot(r => addChild(r, parent, { id: newId(), name: `${name}-${Math.floor(Math.random()*100)}`, type, children: type === "directory" ? [] : undefined }));
+              setRoot(r => addChild(r, parent, {
+                id: newId(),
+                name: `${name}-${Math.floor(Math.random() * 100)}`,
+                type,
+                children: type === "directory" ? [] : undefined
+              }));
               setExpanded(prev => new Set([...prev, parent]));
             }}
             onRemove={(id) => { resetTrace(); setRoot(r => removeNode(r, id)); }}
@@ -249,7 +278,7 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
 }
 
 // ------- Presentational subcomponents -------
-function Btn({children, onClick}: {children: React.ReactNode; onClick?: () => void}) {
+function Btn({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
   return (
     <button onClick={onClick} className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-gray-800 hover:shadow active:scale-[0.99]">
       {children}
@@ -257,7 +286,7 @@ function Btn({children, onClick}: {children: React.ReactNode; onClick?: () => vo
   );
 }
 
-function NameInlineEditor({value, onChange}: {value: string; onChange: (v: string) => void}) {
+function NameInlineEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(value);
   useEffect(() => setText(value), [value]);
@@ -291,7 +320,7 @@ function TreeNode({
   onAddChild: (parentId: string, type: NodeType) => void;
   onRemove: (id: string) => void;
   onRename: (id: string, name: string) => void;
-  onMove: (id: string, dir: -1|1) => void;
+  onMove: (id: string, dir: -1 | 1) => void;
   highlightId?: string | null;
 }) {
   const isDir = node.type === "directory";
@@ -300,7 +329,11 @@ function TreeNode({
   const toggle = () => {
     setExpanded(prev => {
       const n = new Set(prev);
-      isOpen ? n.delete(node.id) : n.add(node.id);
+      if (isOpen) {
+        n.delete(node.id);
+      } else {
+        n.add(node.id);
+      }
       return n;
     });
   };
