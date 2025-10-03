@@ -90,11 +90,18 @@ export default function WavyPlane() {
   });
 
   // UI -> uniforms
-  useEffect(() => { matRef.current && (matRef.current.wireframe = wire); }, [wire]);
   useEffect(() => {
-    if (!matRef.current) return;
-    matRef.current.uniforms.uAmp.value = amp;
-    (matRef.current.uniforms.uFreq.value as THREE.Vector2).set(fx, fy);
+    const mat = matRef.current;
+    if (!mat) return;
+    mat.wireframe = wire;
+    mat.needsUpdate = true; // explicit assignment instead of bare expression
+  }, [wire]);
+
+  useEffect(() => {
+    const mat = matRef.current;
+    if (!mat) return;
+    mat.uniforms.uAmp.value = amp;
+    (mat.uniforms.uFreq.value as THREE.Vector2).set(fx, fy);
   }, [amp, fx, fy]);
 
   return (
