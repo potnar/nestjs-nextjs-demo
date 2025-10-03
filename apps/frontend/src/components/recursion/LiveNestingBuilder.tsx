@@ -4,6 +4,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
 
 export type NodeType = "file" | "directory";
 export type NodeT = { id: string; name: string; type: NodeType; children?: NodeT[] };
+export type Mode = "preorder" | "postorder" | "bfs";
 
 type Labels = {
   newTree: string; expandRoot: string; expandAll: string; collapseAll: string;
@@ -113,7 +114,7 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
     }
   };
 
-  const [mode, setMode] = useState<"preorder" | "postorder" | "bfs">("preorder");
+  const [mode, setMode] = useState<Mode>("preorder");
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState<Step | null>(null);
   const iterRef = useRef<Generator<Step, void, unknown> | null>(null);
@@ -184,7 +185,6 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
         <div className="rounded-2xl border border-gray-200 dark:border-gray-800 p-3">
           <TreeNode
             node={root}
-            path=""
             expanded={expanded}
             setExpanded={setExpanded}
             onAddChild={(parent, type) => {
@@ -206,7 +206,10 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
             <select
               className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800"
               value={mode}
-              onChange={(e) => { setMode(e.target.value as any); resetTrace(); }}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                setMode(e.target.value as Mode);
+                resetTrace();
+              }}
             >
               <option value="preorder">{labels.preorder}</option>
               <option value="postorder">{labels.postorder}</option>
@@ -279,23 +282,27 @@ function NameInlineEditor({value, onChange}: {value: string; onChange: (v: strin
 }
 
 function TreeNode({
-  node, path, expanded, setExpanded,
+  node, expanded, setExpanded,
   onAddChild, onRemove, onRename, onMove, highlightId
 }: {
-  node: NodeT; path: string; expanded: Set<string>; setExpanded: (s: Set<string>) => void;
+  node: NodeT;
+  expanded: Set<string>;
+  setExpanded: React.Dispatch<React.SetStateAction<Set<string>>>;
   onAddChild: (parentId: string, type: NodeType) => void;
   onRemove: (id: string) => void;
   onRename: (id: string, name: string) => void;
   onMove: (id: string, dir: -1|1) => void;
   highlightId?: string | null;
 }) {
-  const key = path ? `${path}/${node.id}` : node.id;
-  const isOpen = expanded.has(key);
   const isDir = node.type === "directory";
+  const isOpen = expanded.has(node.id);
+
   const toggle = () => {
-    const n = new Set(expanded);
-    isOpen ? n.delete(key) : n.add(key);
-    setExpanded(n);
+    setExpanded(prev => {
+      const n = new Set(prev);
+      isOpen ? n.delete(node.id) : n.add(node.id);
+      return n;
+    });
   };
 
   return (
@@ -325,7 +332,6 @@ function TreeNode({
             <TreeNode
               key={c.id}
               node={c}
-              path={key}
               expanded={expanded}
               setExpanded={setExpanded}
               onAddChild={onAddChild}
