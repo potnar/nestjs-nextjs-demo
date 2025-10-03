@@ -1,21 +1,22 @@
 import Navbar from "@/components/nav/Navbar";
-import { NextIntlClientProvider } from "next-intl";
+import { NextIntlClientProvider, AbstractIntlMessages } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { ReactNode } from "react";
 
 type Locale = "pl" | "en";
-type Messages = Record<string, string>;
 
 type Props = {
   children: ReactNode;
-  params: { locale: Locale };
+  // zgodnie z Twoim LayoutProps -> params jako Promise
+  params: Promise<{ locale: Locale }>;
 };
 
 export default async function LocaleLayout({ children, params }: Props) {
-  const { locale } = params;
+  const { locale } = await params; // <-- zgodne z LayoutProps
   setRequestLocale(locale);
 
-  const messages: Messages = (await import(`@/languages/${locale}.json`)).default;
+  const messages = (await import(`@/languages/${locale}.json`))
+    .default as AbstractIntlMessages;
 
   return (
     <NextIntlClientProvider key={locale} locale={locale} messages={messages}>
