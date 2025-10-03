@@ -27,7 +27,7 @@ export default function LiveNestingBuilder({labels}: {labels: Labels}) {
   // ---------- tree state ----------
   const [root, setRoot] = useState<NodeT>({ id: newId(), name: "project", type: "directory", children: [] });
   const [expanded, setExpanded] = useState<Set<string>>(new Set([ ]));
-  useEffect(() => setExpanded(new Set([root.id])), []); // expand root on mount
+  useEffect(() => setExpanded(new Set([root.id])), [root.id]); // expand root on mount
 
   // ---------- edit ops ----------
   const addChild = (tree: NodeT, targetId: string, child: NodeT): NodeT => {
