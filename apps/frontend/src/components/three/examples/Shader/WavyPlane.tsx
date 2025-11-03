@@ -47,7 +47,7 @@ export default function WavyPlane() {
   const hudRef = useRef(0);
 
   const mountRef = useThreeCanvas({
-    onBuild: ({ scene, camera, controls }) => {
+    onBuild: ({ scene, camera, controls, frame }) => {
       scene.background = new THREE.Color(0x0b1020);
       scene.add(new THREE.GridHelper(100, 50), new THREE.AxesHelper(5));
       camera.position.set(0, 10, 22);
@@ -73,6 +73,9 @@ export default function WavyPlane() {
 
       const mesh = new THREE.Mesh(geom, mat);
       scene.add(mesh);
+
+      scene.updateMatrixWorld(true);
+      frame(mesh, { offset: 1.9 });
 
       return {
         onFrame: (dt: number) => {

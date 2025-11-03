@@ -132,7 +132,7 @@ export default function Showcase() {
   };
 
   const mountRef = useThreeCanvas({
-    onBuild: ({ scene, camera, controls }) => {
+    onBuild: ({ scene, camera, controls, frame }) => {
       scene.background = new THREE.Color(0x0b1020);
       scene.add(new THREE.GridHelper(40,40), new THREE.AxesHelper(3));
       camera.position.set(0, 6, 14);
@@ -142,8 +142,11 @@ export default function Showcase() {
       const geom = new THREE.SphereGeometry(4.5, 128, 64);
       const mat = makeMaterial(effect);
       const mesh = new THREE.Mesh(geom, mat);
-      meshRef.current = mesh; matRef.current = mat;
+      meshRef.current = mesh; 
+      matRef.current = mat;
       scene.add(mesh);
+      scene.updateMatrixWorld(true);
+      frame(mesh, { offset: 1.65 });
 
       return {
         onFrame: (dt: number) => {
