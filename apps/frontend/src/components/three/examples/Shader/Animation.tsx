@@ -1,6 +1,6 @@
 "use client";
 import * as THREE from "three";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useThreeCanvas } from "../../useThreeCanvas";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -23,12 +23,15 @@ void main() {
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }`;
 
-
 export default function Animation() {
   const [speed, setSpeed] = useState<number>(1.0);
 
+  // >>> klucz: ref na speed + aktualizacja przy zmianie stanu
+  const speedRef = useRef(speed);
+  useEffect(() => { speedRef.current = speed; }, [speed]);
+
   const ref = useThreeCanvas({
-    onBuild: ({ scene }) => {
+    onBuild: ({ scene, frame }) => {
       const plane = new THREE.Mesh(
         new THREE.PlaneGeometry(6, 3, 1, 1),
         new THREE.ShaderMaterial({
@@ -39,9 +42,17 @@ export default function Animation() {
       );
       scene.add(plane);
 
+      // (opcjonalnie) dopasuj kadr, by było trochę miejsca
+      scene.updateMatrixWorld(true);
+      frame(plane, { offset: 1.4 });
+
+      // licz czas inkrementacyjnie -> zmiana speed działa "na żywo"
+      let time = 0;
+
       return {
-        onFrame: (dt, t) => {
-          (plane.material as THREE.ShaderMaterial).uniforms.u_time.value = t * speed;
+        onFrame: (dt) => {
+          time += dt * speedRef.current;
+          (plane.material as THREE.ShaderMaterial).uniforms.u_time.value = time;
         },
       };
     },
@@ -56,11 +67,12 @@ export default function Animation() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <div className="mb-2 text-sm">Prędkość: {speed.toFixed(2)}x</div>
+            <div className="mb-2 text-sm">Prędkość: {speed.toFixed(2)}×</div>
             <Slider value={[speed]} step={0.1} min={0} max={3} onValueChange={(v) => setSpeed(v[0])} />
           </div>
           <div className="text-xs text-muted-foreground">
-            Minimalny vertex/fragment shader z uniformem <code>u_time</code>.
+            Minimalny vertex/fragment shader z uniformem <code>u_time</code>. Zmiana prędkości działa w locie dzięki{" "}
+            <code>useRef</code> + inkrementacji o <code>dt * speed</code>.
           </div>
         </CardContent>
       </Card>
