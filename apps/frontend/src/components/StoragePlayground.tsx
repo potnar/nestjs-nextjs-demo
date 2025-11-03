@@ -313,7 +313,13 @@ function CookieForm({
       </div>
       <div className="flex flex-wrap gap-2 items-center text-sm">
         <label className="text-xs opacity-70 w-full sm:w-auto">SameSite</label>
-        <select value={sameSite} onChange={e => onSameSite(e.target.value as any)} className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800">
+        <select
+          value={sameSite}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+            onSameSite(e.target.value as "Lax" | "Strict" | "None")
+          }
+          className="px-2 py-1 rounded bg-gray-100 dark:bg-gray-800"
+        >
           <option value="Lax">Lax</option>
           <option value="Strict">Strict</option>
           <option value="None">None</option>

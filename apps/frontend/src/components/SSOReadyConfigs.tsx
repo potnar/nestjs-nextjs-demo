@@ -285,7 +285,18 @@ function DocTree({
 }) {
   const isDir = node.type === "directory";
   const isOpen = expanded.has(node.id);
-  const toggle = () => setExpanded(prev => { const n = new Set(prev); isOpen ? n.delete(node.id) : n.add(node.id); return n; });
+ 
+  const toggle = () =>
+    setExpanded(prev => {
+      const n = new Set(prev);
+      if (isOpen) {
+        n.delete(node.id);
+      } else {
+        n.add(node.id);
+      }
+      return n;
+    });
+
   return (
     <div className="leading-6">
       <div
@@ -294,7 +305,7 @@ function DocTree({
         }`}
         onClick={() => onSelect(node.id)}
       >
-        <button className="w-4 text-center" onClick={(e) => { e.stopPropagation(); if (isDir) toggle(); }} title={isDir ? "toggle" : "file"}>
+        <button type="button" className="w-4 text-center" onClick={(e) => { e.stopPropagation(); if (isDir) toggle(); }} title={isDir ? "toggle" : "file"}>
           {isDir ? (isOpen ? "▾" : "▸") : "·"}
         </button>
         <span>{isDir ? "📁" : "📄"}</span>
