@@ -53,7 +53,7 @@ export default function AbortableSearch({ endpoint = "/api/search" }: { endpoint
         setData(json);
         setStatus("success");
       })
-      .catch((e: any) => {
+      .catch((e: Error) => {
         if (e?.name === "AbortError") {
           setStatus("aborted");
           return;
@@ -141,7 +141,7 @@ export default function AbortableSearch({ endpoint = "/api/search" }: { endpoint
 
         {status === "aborted" && (
           <div className="text-sm">
-            Żądanie przerwane. Wpisanie nowego zapytania lub klik „Stop” anuluje fetch (AbortController).
+            Żądanie przerwane. Wpisanie nowego zapytania lub klik &quot;Stop&quot; anuluje fetch (AbortController).
           </div>
         )}
 
@@ -151,8 +151,8 @@ export default function AbortableSearch({ endpoint = "/api/search" }: { endpoint
       {/* Tipy do integracji */}
       <ul className="text-xs opacity-70 list-disc ml-5">
         <li>Każda zmiana pola anuluje poprzednie żądanie (cleanup w <code>useEffect</code>).</li>
-        <li>Przycisk „Stop” wywołuje <code>AbortController.abort()</code>.</li>
-        <li>Dodaj <code>"DOM"</code> do <code>tsconfig.compilerOptions.lib</code>, jeśli TS krzyczy na <code>AbortController</code>.</li>
+        <li>Przycisk &quot;Stop&quot; wywołuje <code>AbortController.abort()</code>.</li>
+        <li>Dodaj <code>&quot;DOM&quot;</code> do <code>tsconfig.compilerOptions.lib</code>, jeśli TS krzyczy na <code>AbortController</code>.</li>
       </ul>
     </div>
   );
