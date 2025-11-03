@@ -60,6 +60,63 @@
     "three": {
       "title": "Three.js lab",
       "desc": "Wypróbuj przykłady 3D i interakcje"
+    }, 
+    "storage": {
+      "title": "Storage i cookies",
+      "desc": "Praktycznie: localStorage vs sessionStorage vs cookies"
+    },
+    "sso": {
+      "title": "SSO — przepływ logowania (Authorization Code + PKCE)",
+      "desc": "Przepływ Authorization Code + PKCE krok po kroku",
+      "back": "Wstecz",
+      "lead": "Przejdź krok po kroku przez SSO (/authorize → /callback → /token → sesja → /userinfo → Resource API) i zobacz co dzieje się na każdym etapie.",
+      "actions": {
+        "expandRoot": "Rozwiń tylko root",
+        "expandAll": "Rozwiń wszystko",
+        "collapseAll": "Zwiń wszystko",
+        "restartFlow": "Restartuj flow"
+      },
+      "traversal": {
+        "mode": "Tryb traversala:",
+        "preorder": "Preorder",
+        "postorder": "Postorder",
+        "bfs": "BFS"
+      },
+      "controls": {
+        "start": "Start",
+        "pause": "Pauza",
+        "step": "Krok",
+        "reset": "Reset"
+      },
+      "explain": {
+        "title": "Co się dzieje teraz?",
+        "stack": "Ścieżka (stack)"
+      },
+      "structure": {
+        "title": "Struktura (JSON)",
+        "dirs": "foldery",
+        "files": "pliki"
+      },
+      "authBox": {
+        "title": "SSO (realne) — NextAuth (opcjonalnie)",
+        "info": "Jeśli masz skonfigurowany NextAuth, użyj linków poniżej, aby wykonać prawdziwe logowanie."
+      },
+      "auth": {
+        "signin": "Zaloguj",
+        "signout": "Wyloguj"
+      }
+    },
+    "abort": {
+      "title": "Anulowanie zapytań (AbortController)",
+      "desc": "Demo: debounce, anulowanie fetch i przycisk Stop."
+    },
+    "form": {
+      "title": "Formularz przykładowy",
+      "desc": "Demo: formularz przykładowy"
+    },
+    "ts-faq": {
+      "title": "TypeScript – FAQ",
+      "desc": "Najczęściej zadawane pytania z przykładami."
     }
   },
   "recursion": {

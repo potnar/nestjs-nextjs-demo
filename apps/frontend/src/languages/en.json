@@ -59,6 +59,63 @@
     "three": {
       "title": "Three.js lab",
       "desc": "Try 3D examples and interactions"
+    },
+    "storage": {
+      "title": "Storage & Cookies",
+      "desc": "Hands-on: localStorage vs sessionStorage vs cookies"
+    },
+    "abort": {
+      "title": "Abortable Fetch (AbortController)",
+      "desc": "Demo: debounce, fetch cancellation and a Stop button."
+    },
+    "form": {
+      "title": "Form Example",
+      "desc": "Demo: form example"
+    },
+    "sso": {
+      "title": "SSO — login flow (Authorization Code + PKCE)",
+       "desc": "Authorization Code + PKCE step by step",
+      "back": "Back",
+      "lead": "Step through the SSO flow (/authorize → /callback → /token → session → /userinfo → Resource API) and see what happens at each stage.",
+      "actions": {
+        "expandRoot": "Expand root only",
+        "expandAll": "Expand all",
+        "collapseAll": "Collapse all",
+        "restartFlow": "Restart flow"
+      },
+      "traversal": {
+        "mode": "Traversal mode:",
+        "preorder": "Preorder",
+        "postorder": "Postorder",
+        "bfs": "BFS"
+      },
+      "controls": {
+        "start": "Start",
+        "pause": "Pause",
+        "step": "Step",
+        "reset": "Reset"
+      },
+      "explain": {
+        "title": "What’s happening?",
+        "stack": "Path (stack)"
+      },
+      "structure": {
+        "title": "Structure (JSON)",
+        "dirs": "dirs",
+        "files": "files"
+      },
+      "authBox": {
+        "title": "SSO (real) — NextAuth (optional)",
+        "info": "If you have NextAuth configured, use the links below to perform a real login."
+      },
+      "auth": {
+        "signin": "Sign in",
+        "signout": "Sign out"
+      }
+    },
+     "ts-faq": {
+      "title": "TypeScript – FAQ",
+      "desc": "Common TypeScript questions with examples."
     }
   },
   "recursion": {
