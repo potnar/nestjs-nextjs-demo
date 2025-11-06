@@ -11,7 +11,8 @@
     "raycast": "Interakcja: Raycasting",
     "shader": "Shader: animowany gradient",
     "instanced": "InstancedMesh: wiele obiektów",
-    "LOD": "LOD: różne poziomy szczegółowości"
+    "LOD": "LOD: różne poziomy szczegółowości",
+    "brushripple": "Pędzel & Falowanie: interaktywny efekt falowania"
   },
   "tooltips": {
   "instanceColors": "Kolor per instancja: każda kopia może mieć inny kolor, ale nadal renderujemy jednym draw callem (Instanced), bo kolor jest atrybutem, nie osobnym materiałem.",

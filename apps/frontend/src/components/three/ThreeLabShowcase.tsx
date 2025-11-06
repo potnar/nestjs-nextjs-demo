@@ -17,8 +17,9 @@ const Raycast  = dynamic(() => import("./examples/Raycast"),  { ssr: false });
 const Shader   = dynamic(() => import("./examples/Shader/index"),   { ssr: false });
 const Instanced = dynamic(() => import("./examples/Instanced"), { ssr: false });
 const LOD = dynamic(() => import("./examples/LOD"), { ssr: false });
+const BrushRipple = dynamic(() => import("./examples/BrushRipple"), { ssr: false });
 
-const EXAMPLE_KEYS: ExampleKey[] = ["minimal", "raycast", "shader", "instanced", "LOD"];
+const EXAMPLE_KEYS: ExampleKey[] = ["minimal", "raycast", "shader", "instanced", "LOD", "brushripple"];
 
 export default function ThreeLabShowcase() {
   const t = useTranslations();
@@ -30,6 +31,7 @@ export default function ThreeLabShowcase() {
       case "shader":  return Shader;
       case "instanced": return Instanced;
       case "LOD": return LOD;
+      case "brushripple": return BrushRipple;
       default:        return Minimal;
     }
   }, [key]);

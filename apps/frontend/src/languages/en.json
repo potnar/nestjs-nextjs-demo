@@ -11,7 +11,8 @@
     "raycast": "Interaction: Raycasting",
     "shader": "Shader: animated gradient",
     "instanced": "InstancedMesh: many objects",
-    "LOD": "LOD: levels of detail"
+    "LOD": "LOD: levels of detail",
+    "brushripple": "Brush & Ripple: interactive ripple effect"
   },
   "tooltips": {
     "instanceColors": "Give each copy its own color without new materials — in Instanced mode draw calls stay ≈ 1.",
