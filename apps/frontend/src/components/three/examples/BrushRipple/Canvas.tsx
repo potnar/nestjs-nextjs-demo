@@ -1,7 +1,7 @@
 "use client";
 import * as THREE from "three";
 import { PropsWithChildren, useEffect, useRef } from "react";
-import { useThreeCanvas } from "../../useThreeCanvas";
+import { useThreeCanvas } from "@/components/three/useThreeCanvas";
 import { HeightField } from "@/lib/heightField";
 import { applyBrush } from "@/lib/brush";
 
