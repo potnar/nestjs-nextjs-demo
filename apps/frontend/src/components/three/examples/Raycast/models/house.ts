@@ -30,11 +30,11 @@ export function buildHouse(group: THREE.Group) {
     mesh.rotation.y = rotY;
     mesh.position.copy(pos);
     mesh.name = name;
-    (mesh as any).userData.idx = idx;
+    mesh.userData.idx = idx;
 
     group.add(mesh);
     pickables.push(mesh);
-    walls.push({ mesh: mesh as any, canvas, ctx, tex, name, idx });
+    walls.push({ mesh, canvas, ctx, tex, name, idx });
   };
 
   mkWall("front", W, H, 0, new THREE.Vector3(0, H / 2, D / 2), 1);

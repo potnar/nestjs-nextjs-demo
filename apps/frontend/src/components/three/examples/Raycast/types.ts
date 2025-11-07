@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js"; 
 
 export type ClickInfo = { name: string; index: number } | null;
 export type Model = "cubes" | "house";
@@ -8,7 +9,7 @@ export type BuildCtx = {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
-  controls: any; // OrbitControls z hooka
+  controls: OrbitControls;  // OrbitControls z hooka
   frame: (o: THREE.Object3D, opts?: { offset?: number }) => void;
 };
 

@@ -18,7 +18,7 @@ export function buildCubes(group: THREE.Group) {
       const mesh = new THREE.Mesh(geo, mat) as CubeMesh;
       mesh.position.set(x, 0.5, z);
       mesh.name = `cube_${idx}`;
-      (mesh as any).userData.idx = idx;
+      mesh.userData.idx = idx;
 
       group.add(mesh);
       pickables.push(mesh);
