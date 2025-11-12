@@ -1,33 +1,44 @@
 "use client";
 import * as THREE from "three";
 
-function setTexSRGB(tex: THREE.Texture) {
+type KnownMat =
+  | THREE.MeshStandardMaterial
+  | THREE.MeshPhysicalMaterial
+  | (THREE.Material & Partial<Record<"map" | "emissiveMap" | "metalnessMap" | "roughnessMap" | "normalMap" | "displacementMap" | "aoMap" | "specularMap" | "bumpMap", THREE.Texture>>);
+
+/** zgodność z r151- i r152+ */
+function setTexSRGB(tex: THREE.Texture | undefined) {
   if (!tex) return;
-  if ("colorSpace" in tex) (tex as any).colorSpace = THREE.SRGBColorSpace;
-  else (tex as any).encoding = THREE.sRGBEncoding;
+  if ("colorSpace" in tex) (tex as THREE.Texture & { colorSpace?: THREE.ColorSpace }).colorSpace = THREE.SRGBColorSpace;
+  else (tex as unknown as { encoding?: THREE.TextureEncoding }).encoding = THREE.sRGBEncoding;
 }
-function setTexLinear(tex: THREE.Texture) {
+function setTexLinear(tex: THREE.Texture | undefined) {
   if (!tex) return;
-  if ("colorSpace" in tex) (tex as any).colorSpace = THREE.LinearSRGBColorSpace;
-  else (tex as any).encoding = THREE.LinearEncoding;
+  if ("colorSpace" in tex) (tex as THREE.Texture & { colorSpace?: THREE.ColorSpace }).colorSpace = THREE.LinearSRGBColorSpace;
+  else (tex as unknown as { encoding?: THREE.TextureEncoding }).encoding = THREE.LinearEncoding;
 }
 
-/** Ustaw właściwe colorSpace dla popularnych map i odśwież materiały. */
 export function fixMaterialColorSpaces(root: THREE.Object3D) {
-  root.traverse((obj) => {
-    const mesh = obj as THREE.Mesh;
-    if (!mesh.isMesh) return;
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh || !mesh.material) return;
 
     const apply = (m: THREE.Material) => {
-      const mat = m as any;
+      const mat = m as KnownMat;
 
-      // sRGB — „kolorowe” mapy
-      ["map", "emissiveMap"].forEach((k) => mat[k]?.isTexture && setTexSRGB(mat[k]));
+      // sRGB — kolorowe
+      setTexSRGB((mat as any).map);
+      setTexSRGB((mat as any).emissiveMap);
       // Linear — mapy danych
-      ["metalnessMap","roughnessMap","normalMap","displacementMap","aoMap","specularMap","bumpMap"]
-        .forEach((k) => mat[k]?.isTexture && setTexLinear(mat[k]));
+      setTexLinear((mat as any).metalnessMap);
+      setTexLinear((mat as any).roughnessMap);
+      setTexLinear((mat as any).normalMap);
+      setTexLinear((mat as any).displacementMap);
+      setTexLinear((mat as any).aoMap);
+      setTexLinear((mat as any).specularMap);
+      setTexLinear((mat as any).bumpMap);
 
-      mat.needsUpdate = true;
+      (mat as THREE.Material).needsUpdate = true;
     };
 
     if (Array.isArray(mesh.material)) mesh.material.forEach(apply);

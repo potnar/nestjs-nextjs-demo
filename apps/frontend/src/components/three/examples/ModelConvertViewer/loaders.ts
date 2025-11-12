@@ -1,7 +1,6 @@
 "use client";
 import * as THREE from "three";
 
-// Ładowarki dynamiczne (nie obciążają bundla na starcie)
 const importGLTFLoader = () => import("three/examples/jsm/loaders/GLTFLoader.js");
 const importDRACO      = () => import("three/examples/jsm/loaders/DRACOLoader.js");
 const importMeshopt    = () => import("three/examples/jsm/libs/meshopt_decoder.module.js");
@@ -12,7 +11,6 @@ const importFBXLoader  = () => import("three/examples/jsm/loaders/FBXLoader.js")
 const importSTLLoader  = () => import("three/examples/jsm/loaders/STLLoader.js");
 const importPLYLoader  = () => import("three/examples/jsm/loaders/PLYLoader.js");
 
-
 export type SupportedExt = "gltf" | "glb" | "obj" | "fbx" | "stl" | "ply";
 
 export function inferExt(name: string): SupportedExt | null {
@@ -20,8 +18,8 @@ export function inferExt(name: string): SupportedExt | null {
   return (m?.[1] as SupportedExt) ?? null;
 }
 
-// ————————————————— helpers: sidecary/manager —————————————————
-type FileMap = Record<string, string>; // nazwa pliku (lowercase) -> blobURL
+// --- helpers for sidecars ---
+type FileMap = Record<string, string>; // filename(lowercase) -> blobURL
 
 function buildFileMap(files: File[] = []): FileMap {
   const map: FileMap = {};
@@ -40,60 +38,85 @@ function makeManager(map: FileMap): THREE.LoadingManager {
   return manager;
 }
 
-
-// ————————————————— główna funkcja —————————————————
-export async function loadFileToObject(file: File, sidecars: File[] = []): Promise<THREE.Object3D> {
+export async function loadFileToObject(
+  file: File,
+  sidecars: File[] = [],
+  renderer?: THREE.WebGLRenderer
+): Promise<THREE.Object3D> {
   const ext = inferExt(file.name);
-  if (!ext) {
-    throw new Error("Nieobsługiwane rozszerzenie. Obsługuję: gltf, glb, obj, fbx, stl, ply.");
-  }
+  if (!ext) throw new Error("Nieobsługiwane rozszerzenie. Obsługuję: gltf, glb, obj, fbx, stl, ply.");
 
   const buf = await file.arrayBuffer();
   const name = file.name;
+  const map = buildFileMap(sidecars);
+  const manager = makeManager(map);
+  const BASE = (process.env.NEXT_PUBLIC_BASE_PATH as string) || "";
 
   switch (ext) {
-    case "gltf":
-    case "glb": {
-      const [{ GLTFLoader }, { DRACOLoader }, { MeshoptDecoder }] = await Promise.all([
-        importGLTFLoader(),
-        importDRACO(),
-        importMeshopt(),
+    case "glb":
+    case "gltf": {
+      const [{ GLTFLoader, type GLTF }, { DRACOLoader }, { MeshoptDecoder }, { KTX2Loader }] = await Promise.all([
+        importGLTFLoader(), importDRACO(), importMeshopt(), importKTX2()
       ]);
 
-      const loader = new GLTFLoader();
+      const loader = new GLTFLoader(manager);
 
-      // --- DRACO: fallback lokalny -> CDN ---
-      const draco = new DRACOLoader();
-      const BASE = (process.env.NEXT_PUBLIC_BASE_PATH as string) || "";
+      // DRACO (local -> CDN)
+      const draco = new DRACOLoader(manager);
       const DRACO_LOCAL = `${BASE}/libs/draco/`;
-      const DRACO_CDN = "https://www.gstatic.com/draco/versioned/decoders/1.5.7/";
-      let decoderPath = DRACO_LOCAL;
+      const DRACO_CDN   = "https://www.gstatic.com/draco/versioned/decoders/1.5.7/";
+      let dracoPath = DRACO_LOCAL;
       try {
         const head = await fetch(`${DRACO_LOCAL}draco_decoder.wasm`, { method: "HEAD", cache: "no-store" });
-        if (!head.ok) decoderPath = DRACO_CDN;
-      } catch {
-        decoderPath = DRACO_CDN;
-      }
-      draco.setDecoderPath(decoderPath);
+        if (!head.ok) dracoPath = DRACO_CDN;
+      } catch { dracoPath = DRACO_CDN; }
+      draco.setDecoderPath(dracoPath);
       loader.setDRACOLoader(draco);
 
-      // Meshopt (nazwany eksport)
+      // KTX2 (local -> CDN)
+      const ktx2 = new KTX2Loader(manager);
+      const BASIS_LOCAL = `${BASE}/libs/basis/`;
+      const BASIS_CDN   = "https://unpkg.com/three@0.164.0/examples/jsm/libs/basis/";
+      let basisPath = BASIS_LOCAL;
+      try {
+        const head = await fetch(`${BASIS_LOCAL}basis_transcoder.wasm`, { method: "HEAD", cache: "no-store" });
+        if (!head.ok) basisPath = BASIS_CDN;
+      } catch { basisPath = BASIS_CDN; }
+      ktx2.setTranscoderPath(basisPath);
+      if (renderer) ktx2.detectSupport(renderer);
+      loader.setKTX2Loader(ktx2);
+
+      // Meshopt
       loader.setMeshoptDecoder(MeshoptDecoder);
 
-      const gltf = await new Promise<any>((res, rej) => loader.parse(buf as ArrayBuffer, "", res, rej));
-      const root: THREE.Object3D | undefined = (gltf.scene || gltf.scenes?.[0]) as THREE.Object3D | undefined;
-      if (!root) throw new Error("GLTF nie zawiera sceny.");
-      root.name ||= name;
-      return root;
+      if (ext === "glb") {
+        const gltf: GLTF = await new Promise((res, rej) =>
+          loader.parse(buf as ArrayBuffer, "", res, rej)
+        );
+        const root = (gltf.scene || gltf.scenes?.[0]) as THREE.Object3D | undefined;
+        if (!root) throw new Error("GLB nie zawiera sceny.");
+        root.name ||= name;
+        return root;
+      } else {
+        const url = URL.createObjectURL(file);
+        try {
+          const gltf: GLTF = await new Promise((res, rej) => loader.load(url, res, undefined, rej));
+          const root = (gltf.scene || gltf.scenes?.[0]) as THREE.Object3D | undefined;
+          if (!root) throw new Error("GLTF nie zawiera sceny.");
+          root.name ||= name;
+          return root;
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+      }
     }
 
-   // ———————————————— OBJ (+MTL/tekstury) ————————————————
     case "obj": {
       const [{ OBJLoader }, { MTLLoader }] = await Promise.all([importOBJLoader(), importMTLLoader()]);
       const text = new TextDecoder().decode(new Uint8Array(buf));
       const objLoader = new OBJLoader(manager);
 
-      // spróbuj znaleźć pasujący MTL
+      // spróbuj dopasować MTL
       const mtlKey = file.name.replace(/\.[^.]+$/i, ".mtl").toLowerCase();
       const mtlUrl = map[mtlKey];
       if (mtlUrl) {
@@ -109,7 +132,6 @@ export async function loadFileToObject(file: File, sidecars: File[] = []): Promi
       return obj;
     }
 
-    // ———————————————— FBX ————————————————
     case "fbx": {
       const { FBXLoader } = await importFBXLoader();
       const loader = new FBXLoader(manager);
@@ -118,7 +140,6 @@ export async function loadFileToObject(file: File, sidecars: File[] = []): Promi
       return obj;
     }
 
-      // ———————————————— STL ————————————————
     case "stl": {
       const { STLLoader } = await importSTLLoader();
       const loader = new STLLoader();
@@ -129,12 +150,10 @@ export async function loadFileToObject(file: File, sidecars: File[] = []): Promi
       return mesh;
     }
 
-   // ———————————————— PLY (vertexColors) ————————————————
     case "ply": {
       const { PLYLoader } = await importPLYLoader();
       const loader = new PLYLoader();
       const geom = loader.parse(buf as ArrayBuffer);
-
       const hasVC = !!geom.getAttribute("color");
       if (!geom.getAttribute("normal")) geom.computeVertexNormals();
 

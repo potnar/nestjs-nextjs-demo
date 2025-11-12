@@ -56,12 +56,16 @@ renderer.toneMappingExposure = 1.0;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.physicallyCorrectLights = true;
 
+type RendererCS = THREE.WebGLRenderer & {
+  outputColorSpace?: THREE.ColorSpace;
+  outputEncoding?: THREE.TextureEncoding;
+};
 // NEW API (r152+)
-if ("outputColorSpace" in renderer) {
-  (renderer as any).outputColorSpace = THREE.SRGBColorSpace;
+const rcs = renderer as RendererCS;
+if ("outputColorSpace" in rcs) {
+  rcs.outputColorSpace = THREE.SRGBColorSpace;
 } else {
-  // OLD API (<= r151)
-  (renderer as any).outputEncoding = THREE.sRGBEncoding;
+  rcs.outputEncoding = THREE.sRGBEncoding;
 }
 
     // Ustaw DPR; clamp do 2 dla wydajności (wysokie DPR na mobilkach bywa zabójcze)
