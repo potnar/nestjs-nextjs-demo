@@ -20,9 +20,28 @@ function saveBlob(data: BlobPart, mime: string, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/** Kopiuje ArrayBufferLike (w tym SharedArrayBuffer) do zwykłego ArrayBuffer */
+function toArrayBuffer(buf: ArrayBufferLike): ArrayBuffer {
+  const out = new ArrayBuffer(buf.byteLength);
+  new Uint8Array(out).set(new Uint8Array(buf));
+  return out;
+}
+
+/** Zwraca *zawsze* zwykły ArrayBuffer (bez SharedArrayBuffer/ArrayBufferLike) */
 function ensureArrayBuffer(x: unknown): ArrayBuffer {
   if (x instanceof ArrayBuffer) return x;
-  if (x instanceof Uint8Array) return x.buffer;
+
+  // SharedArrayBuffer (gdy dostępny w środowisku)
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore - TS zna globalny typ, ale sprawdzamy defensywnie
+  if (typeof SharedArrayBuffer !== "undefined" && x instanceof SharedArrayBuffer) {
+    return toArrayBuffer(x as unknown as ArrayBufferLike);
+  }
+
+  if (x instanceof Uint8Array) return toArrayBuffer(x.buffer);
+  if (x instanceof DataView)   return toArrayBuffer(x.buffer);
+  if (typeof x === "string")   return new TextEncoder().encode(x).buffer;
+
   throw new Error("Expected ArrayBuffer-like result");
 }
 
@@ -39,8 +58,7 @@ export async function exportObject(
         exporter.parse(
           root,
           (result: ArrayBuffer | GLTFJSON) => {
-            const ab = result instanceof ArrayBuffer ? result : new TextEncoder().encode(JSON.stringify(result)).buffer;
-            // GLB powinno zwrócić ArrayBuffer; fallback dla bezpieczeństwa
+            const ab = result instanceof ArrayBuffer ? result : ensureArrayBuffer(result);
             saveBlob(ab, "model/gltf-binary", `${name}.glb`);
             resolve();
           },
@@ -82,8 +100,8 @@ export async function exportObject(
     case "stl": {
       const { STLExporter } = await importSTLExporter();
       const exporter = new STLExporter();
-      const res = exporter.parse(root, { binary: true });
-      const ab: ArrayBuffer = res instanceof ArrayBuffer ? res : ensureArrayBuffer(res as unknown);
+      const res = exporter.parse(root, { binary: true }); // string | ArrayBuffer
+      const ab = ensureArrayBuffer(res);
       saveBlob(ab, "model/stl", `${name}.stl`);
       break;
     }
@@ -91,9 +109,17 @@ export async function exportObject(
     case "ply": {
       const { PLYExporter } = await importPLYExporter();
       const exporter = new PLYExporter();
-      const res = exporter.parse(root, { binary: true });
-      const ab: ArrayBuffer = res instanceof Uint8Array ? res.buffer : ensureArrayBuffer(res as unknown);
-      saveBlob(ab, "model/ply", `${name}.ply`);
+      await new Promise<void>((resolve, reject) => {
+        exporter.parse(
+          root,
+          (res: string | ArrayBuffer) => {
+            const ab = ensureArrayBuffer(res);
+            saveBlob(ab, "model/ply", `${name}.ply`);
+            resolve();
+          },
+          { binary: true }
+        );
+      });
       break;
     }
 

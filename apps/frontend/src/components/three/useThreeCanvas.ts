@@ -54,7 +54,6 @@ export function useThreeCanvas({ onBuild }: { onBuild: Build }) {
 // 🔧 kolory i tonemapping
 renderer.toneMappingExposure = 1.0;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.physicallyCorrectLights = true;
 
 // r152+: tylko outputColorSpace (bez legacy outputEncoding/sRGBEncoding)
 (renderer as unknown as { outputColorSpace?: THREE.ColorSpace }).outputColorSpace = THREE.SRGBColorSpace;

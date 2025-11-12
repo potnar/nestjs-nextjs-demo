@@ -42,7 +42,6 @@ export default function ModelConvertViewer() {
       // renderer kolory (jeśli nie masz tego w hooku, dodaj)
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.0;
-      renderer.physicallyCorrectLights = true;
    
       (renderer as unknown as { outputColorSpace: THREE.ColorSpace }).outputColorSpace = THREE.SRGBColorSpace;
       
