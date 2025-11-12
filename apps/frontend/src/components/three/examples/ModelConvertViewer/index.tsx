@@ -13,6 +13,7 @@ import { fixMaterialColorSpaces } from "./materials";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 
 type UIChoice = "none" | CenterMode;
+type WireframeMat = THREE.Material & { wireframe?: boolean };
 
 export default function ModelConvertViewer() {
   const [fps, setFps] = useState(0);
@@ -25,9 +26,8 @@ export default function ModelConvertViewer() {
 
   const rootRef = useRef<THREE.Group | null>(null);
   const currentRef = useRef<THREE.Object3D | null>(null);
-
-  // refs dla IBL oraz renderera
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+
   const pmremRef = useRef<THREE.PMREMGenerator | null>(null);
   const envTexRef = useRef<THREE.Texture | null>(null);
   const hemiRef = useRef<THREE.HemisphereLight | null>(null);
@@ -38,44 +38,34 @@ export default function ModelConvertViewer() {
   const mountRef = useThreeCanvas({
     onBuild: ({ scene, camera, controls, renderer }) => {
       rendererRef.current = renderer;
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      // renderer kolory (jeśli nie masz tego w hooku, dodaj)
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.0;
+      renderer.physicallyCorrectLights = true;
+      if ("outputColorSpace" in renderer) {
+        (renderer as unknown as { outputColorSpace: THREE.ColorSpace }).outputColorSpace = THREE.SRGBColorSpace;
+      } else {
+        // @ts-expect-error legacy
+        renderer.outputEncoding = THREE.sRGBEncoding;
+      }
 
       scene.background = new THREE.Color(0x0b1020);
       scene.add(new THREE.GridHelper(60, 60, 0x2a2f3b, 0x1a1e28));
 
-      // Światła (delikatne)
-      const amb = new THREE.AmbientLight(0xffffff, 0.25);
-      const dir = new THREE.DirectionalLight(0xffffff, 2.0);
-      dir.castShadow = true;
-      dir.shadow.mapSize.set(2048, 2048);
-      dir.shadow.camera.near = 0.5;
-      dir.shadow.camera.far = 50;
-      dir.shadow.camera.left = -15;
-      dir.shadow.camera.right = 15;
-      dir.shadow.camera.top = 15;
-      dir.shadow.camera.bottom = -15;
+      const amb = new THREE.AmbientLight(0xffffff, 0.2);
+      const dir = new THREE.DirectionalLight(0xffffff, 1.2);
       dir.position.set(3, 5, 2);
       scene.add(amb, dir);
 
-      // "shadow catcher" – półprzezroczysty materiał na podłodze
-      const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(100, 100),
-        new THREE.ShadowMaterial({ opacity: 0.25 })
-      );
-      ground.rotation.x = -Math.PI / 2;
-      ground.position.y = 0;      // Y=0
-      ground.receiveShadow = true;
-      scene.add(ground);
-
-      // 🔆 IBL: RoomEnvironment -> PMREM
+      // IBL
       const pmrem = new THREE.PMREMGenerator(renderer);
       pmrem.compileEquirectangularShader();
-      const envTex = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+      const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
       scene.environment = envTex;
-      scene.background = envTex;
-      // Dodatkowe miękkie światło, żeby było „czytelniej”
-      const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.5);
+
+      // miękkie światło
+      const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
       hemi.position.set(0, 1, 0);
       scene.add(hemi);
 
@@ -92,10 +82,10 @@ export default function ModelConvertViewer() {
       scene.add(root);
 
       return {
-        onFrame: (deltaTimeSec) => {
-          const now = 1 / Math.max(1e-6, deltaTimeSec);
+        onFrame: (dt: number) => {
+          const now = 1 / Math.max(1e-6, dt);
           fpsAvg.current = fpsAvg.current ? fpsAvg.current * 0.9 + now * 0.1 : now;
-          fpsT.current += deltaTimeSec;
+          fpsT.current += dt;
           if (fpsT.current > 0.25) {
             fpsT.current = 0;
             setFps(Math.round(fpsAvg.current));
@@ -108,43 +98,50 @@ export default function ModelConvertViewer() {
           }
           scene.remove(amb, dir);
 
-          // sprzątanie IBL
           scene.environment = null;
-          if (hemiRef.current) { scene.remove(hemiRef.current); hemiRef.current.dispose?.(); hemiRef.current = null; }
-          if (envTexRef.current) { envTexRef.current.dispose(); envTexRef.current = null; }
-          if (pmremRef.current) { pmremRef.current.dispose(); pmremRef.current = null; }
+          if (hemiRef.current) {
+            scene.remove(hemiRef.current);
+            hemiRef.current.dispose?.();
+            hemiRef.current = null;
+          }
+          if (envTexRef.current) {
+            envTexRef.current.dispose();
+            envTexRef.current = null;
+          }
+          if (pmremRef.current) {
+            pmremRef.current.dispose();
+            pmremRef.current = null;
+          }
         }
       };
     }
   });
 
-  // ——— Import wielu plików (główny + sidecary) ———
-  async function handleFiles(files: File[]) {
+  // Import wielu plików (główny + sidecary)
+  async function handleFiles(files: File[]): Promise<void> {
     setError(null);
     try {
       const prio: Record<string, number> = { glb: 1, gltf: 2, obj: 3, fbx: 4, stl: 5, ply: 6 };
       const main = files
         .map((f) => ({ f, ext: inferExt(f.name) }))
         .filter((x) => x.ext)
-        .sort((a, b) => prio[a.ext!] - prio[b.ext!])[0]?.f;
+        .sort((a, b) => prio[a.ext as string] - prio[b.ext as string])[0]?.f;
 
       if (!main) throw new Error("Nie znaleziono obsługiwanego pliku.");
-
       const sidecars = files.filter((f) => f !== main);
 
-      // 👇 przekaż renderer do loadera (KTX2 detectSupport)
-      const obj = await loadFileToObject(main, sidecars, rendererRef.current || undefined);
+      const obj = await loadFileToObject(main, sidecars, rendererRef.current ?? undefined);
 
-      // 🔧 color spaces tekstur / materiałów
+      // popraw kolor spaces i env intensities
       fixMaterialColorSpaces(obj);
-
-      // 💡 podbij wpływ envMap (często w glTF jest nisko lub 0)
-      obj.traverse((objectModel) => {
-        const mesh = objectModel as THREE.Mesh;
+      obj.traverse((o) => {
+        const mesh = o as THREE.Mesh;
         if (!mesh.isMesh || !mesh.material) return;
-        mesh.castShadow = true;
-        const set = (m: any) => { if ("envMapIntensity" in m) m.envMapIntensity = 1.0; m.needsUpdate = true; };
-        Array.isArray(mesh.material) ? mesh.material.forEach(set) : set(mesh.material);
+        const apply = (m: THREE.Material) => {
+          if ("envMapIntensity" in m) (m as THREE.MeshStandardMaterial).envMapIntensity = 1.5;
+          m.needsUpdate = true;
+        };
+        Array.isArray(mesh.material) ? mesh.material.forEach(apply) : apply(mesh.material);
       });
 
       if (rootRef.current) {
@@ -155,43 +152,52 @@ export default function ModelConvertViewer() {
 
       const base = main.name.replace(/\.[^.]+$/, "") || "model";
       setName(base);
-    } catch (e: any) {
-      setError(e?.message ?? "Nie udało się wczytać modelu.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Nie udało się wczytać modelu.";
+      setError(msg);
     }
   }
 
-  function onDrop(e: React.DragEvent) {
+  function onDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     e.stopPropagation();
     const files = Array.from(e.dataTransfer.files || []);
-    if (files.length) void handleFiles(files);
+    if (files.length) {
+      void handleFiles(files);
+    }
   }
-  function onDragOver(e: React.DragEvent) {
+  function onDragOver(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     e.stopPropagation();
   }
 
-  // Auto-apply centrowania po zmianie trybu
-  useEffect(() => {
+  // ręczne centrowanie
+  function applyCentering(): void {
     if (!currentRef.current) return;
     if (centerChoice === "center" || centerChoice === "bottom") {
       centerObject(currentRef.current, centerChoice);
     }
-  }, [centerChoice]);
+  }
 
-  // skalowanie i wireframe
+  // skala
   useEffect(() => {
     if (rootRef.current) rootRef.current.scale.setScalar(scale);
   }, [scale]);
 
+  // wireframe toggle (bez any)
   useEffect(() => {
-    if (!currentRef.current) return;
-    currentRef.current.traverse((obj) => {
-      const mesh = obj as THREE.Mesh;
-      if (mesh.isMesh && mesh.material) {
-        if (Array.isArray(mesh.material)) mesh.material.forEach((m) => ((m as any).wireframe = wire));
-        else (mesh.material as THREE.Material & { wireframe?: boolean }).wireframe = wire;
-      }
+    const obj = currentRef.current;
+    if (!obj) return;
+
+    const setWF = (m: THREE.Material) => {
+      (m as WireframeMat).wireframe = wire;
+    };
+
+    obj.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh || !mesh.material) return;
+      if (Array.isArray(mesh.material)) mesh.material.forEach(setWF);
+      else setWF(mesh.material);
     });
   }, [wire]);
 
@@ -211,15 +217,20 @@ export default function ModelConvertViewer() {
             </div>
           </div>
         )}
-        <div className="absolute top-2 left-2 rounded-md bg-black/60 text-white text-xs px-2 py-1">FPS: {fps}</div>
+        <div className="absolute top-2 left-2 rounded-md bg-black/60 text-white text-xs px-2 py-1">
+          FPS: {fps}
+        </div>
       </div>
+
       <Card className="col-span-3">
         <CardHeader>
           <CardTitle>3D Viewer & Converter (client-only)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
-            <div className="text-xs rounded bg-red-500/15 border border-red-500/40 text-red-300 px-2 py-1">{error}</div>
+            <div className="text-xs rounded bg-red-500/15 border border-red-500/40 text-red-300 px-2 py-1">
+              {error}
+            </div>
           )}
 
           {/* Import */}
@@ -229,11 +240,14 @@ export default function ModelConvertViewer() {
               type="file"
               multiple
               accept=".gltf,.glb,.obj,.mtl,.fbx,.stl,.ply,.png,.jpg,.jpeg,.webp,.ktx2,.bin"
-              onChange={(e) => e.target.files && handleFiles(Array.from(e.target.files))}
+              onChange={(e) => {
+                const list = e.target.files ? Array.from(e.target.files) : [];
+                if (list.length) void handleFiles(list);
+              }}
               className="block w-full text-sm file:mr-2 file:rounded-md file:border file:px-2 file:py-1 file:text-xs file:bg-muted"
             />
             <div className="text-[11px] text-muted-foreground">
-              Obsługa sidecarów: MTL/tekstury/bin dociągną się automatycznie (URL-resolver).
+              Sidecary (MTL/tekstury/bin) są rozwiązywane przez URL modifier.
             </div>
           </div>
 
@@ -250,7 +264,7 @@ export default function ModelConvertViewer() {
             </Button>
           </div>
 
-          {/* Centrowanie (auto-apply) */}
+          {/* Ręczne centrowanie */}
           <div className="space-y-2">
             <div className="text-sm">Centrowanie pivotu</div>
             <Select value={centerChoice} onValueChange={(v: UIChoice) => setCenterChoice(v)}>
@@ -263,6 +277,7 @@ export default function ModelConvertViewer() {
                 <SelectItem value="bottom">Na ziemi (Y=0)</SelectItem>
               </SelectContent>
             </Select>
+            <Button onClick={applyCentering}>Zastosuj centrowanie</Button>
           </div>
 
           {/* Eksport */}
@@ -283,7 +298,11 @@ export default function ModelConvertViewer() {
             </Select>
             <Button
               disabled={!currentRef.current}
-              onClick={() => currentRef.current && exportObject(currentRef.current, exportFmt, name)}
+              onClick={() => {
+                if (currentRef.current) {
+                  exportObject(currentRef.current, exportFmt, name);
+                }
+              }}
             >
               Eksportuj
             </Button>

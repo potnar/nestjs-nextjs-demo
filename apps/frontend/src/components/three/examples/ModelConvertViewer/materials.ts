@@ -1,21 +1,41 @@
 "use client";
 import * as THREE from "three";
 
-type KnownMat =
-  | THREE.MeshStandardMaterial
-  | THREE.MeshPhysicalMaterial
-  | (THREE.Material & Partial<Record<"map" | "emissiveMap" | "metalnessMap" | "roughnessMap" | "normalMap" | "displacementMap" | "aoMap" | "specularMap" | "bumpMap", THREE.Texture>>);
+type Maps = {
+  map?: THREE.Texture;
+  emissiveMap?: THREE.Texture;
+  metalnessMap?: THREE.Texture;
+  roughnessMap?: THREE.Texture;
+  normalMap?: THREE.Texture;
+  displacementMap?: THREE.Texture;
+  aoMap?: THREE.Texture;
+  specularMap?: THREE.Texture;
+  bumpMap?: THREE.Texture;
+};
 
-/** zgodność z r151- i r152+ */
-function setTexSRGB(tex: THREE.Texture | undefined) {
+type KnownMat =
+  | (THREE.MeshStandardMaterial & Maps)
+  | (THREE.MeshPhysicalMaterial & Maps)
+  | (THREE.Material & Maps);
+
+/** r152+ vs ≤ r151 compatible setter (bez any) */
+function setTexSRGB(tex?: THREE.Texture) {
   if (!tex) return;
-  if ("colorSpace" in tex) (tex as THREE.Texture & { colorSpace?: THREE.ColorSpace }).colorSpace = THREE.SRGBColorSpace;
-  else (tex as unknown as { encoding?: THREE.TextureEncoding }).encoding = THREE.sRGBEncoding;
+  if ("colorSpace" in tex) {
+    (tex as THREE.Texture & { colorSpace: THREE.ColorSpace }).colorSpace = THREE.SRGBColorSpace;
+  } else {
+    // @ts-expect-error legacy three
+    (tex as THREE.Texture).encoding = THREE.sRGBEncoding;
+  }
 }
-function setTexLinear(tex: THREE.Texture | undefined) {
+function setTexLinear(tex?: THREE.Texture) {
   if (!tex) return;
-  if ("colorSpace" in tex) (tex as THREE.Texture & { colorSpace?: THREE.ColorSpace }).colorSpace = THREE.LinearSRGBColorSpace;
-  else (tex as unknown as { encoding?: THREE.TextureEncoding }).encoding = THREE.LinearEncoding;
+  if ("colorSpace" in tex) {
+    (tex as THREE.Texture & { colorSpace: THREE.ColorSpace }).colorSpace = THREE.LinearSRGBColorSpace;
+  } else {
+    // @ts-expect-error legacy three
+    (tex as THREE.Texture).encoding = THREE.LinearEncoding;
+  }
 }
 
 export function fixMaterialColorSpaces(root: THREE.Object3D) {
@@ -27,18 +47,19 @@ export function fixMaterialColorSpaces(root: THREE.Object3D) {
       const mat = m as KnownMat;
 
       // sRGB — kolorowe
-      setTexSRGB((mat as any).map);
-      setTexSRGB((mat as any).emissiveMap);
-      // Linear — mapy danych
-      setTexLinear((mat as any).metalnessMap);
-      setTexLinear((mat as any).roughnessMap);
-      setTexLinear((mat as any).normalMap);
-      setTexLinear((mat as any).displacementMap);
-      setTexLinear((mat as any).aoMap);
-      setTexLinear((mat as any).specularMap);
-      setTexLinear((mat as any).bumpMap);
+      setTexSRGB(mat.map);
+      setTexSRGB(mat.emissiveMap);
 
-      (mat as THREE.Material).needsUpdate = true;
+      // Linear — mapy danych
+      setTexLinear(mat.metalnessMap);
+      setTexLinear(mat.roughnessMap);
+      setTexLinear(mat.normalMap);
+      setTexLinear(mat.displacementMap);
+      setTexLinear(mat.aoMap);
+      setTexLinear(mat.specularMap);
+      setTexLinear(mat.bumpMap);
+
+      mat.needsUpdate = true;
     };
 
     if (Array.isArray(mesh.material)) mesh.material.forEach(apply);
