@@ -1,5 +1,6 @@
 "use client";
 import * as THREE from "three";
+import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 const importGLTFLoader = () => import("three/examples/jsm/loaders/GLTFLoader.js");
 const importDRACO      = () => import("three/examples/jsm/loaders/DRACOLoader.js");
@@ -55,7 +56,7 @@ export async function loadFileToObject(
   switch (ext) {
     case "glb":
     case "gltf": {
-      const [{ GLTFLoader, type GLTF }, { DRACOLoader }, { MeshoptDecoder }, { KTX2Loader }] = await Promise.all([
+      const [{ GLTFLoader }, { DRACOLoader }, { MeshoptDecoder }, { KTX2Loader }] = await Promise.all([
         importGLTFLoader(), importDRACO(), importMeshopt(), importKTX2()
       ]);
 
@@ -90,7 +91,7 @@ export async function loadFileToObject(
       loader.setMeshoptDecoder(MeshoptDecoder);
 
       if (ext === "glb") {
-        const gltf: GLTF = await new Promise((res, rej) =>
+        const gltf: GLTF = await new Promise<GLTF>((res, rej) =>
           loader.parse(buf as ArrayBuffer, "", res, rej)
         );
         const root = (gltf.scene || gltf.scenes?.[0]) as THREE.Object3D | undefined;
@@ -100,7 +101,7 @@ export async function loadFileToObject(
       } else {
         const url = URL.createObjectURL(file);
         try {
-          const gltf: GLTF = await new Promise((res, rej) => loader.load(url, res, undefined, rej));
+          const gltf: GLTF = await new Promise<GLTF>((res, rej) => loader.load(url, res, undefined, rej));
           const root = (gltf.scene || gltf.scenes?.[0]) as THREE.Object3D | undefined;
           if (!root) throw new Error("GLTF nie zawiera sceny.");
           root.name ||= name;
