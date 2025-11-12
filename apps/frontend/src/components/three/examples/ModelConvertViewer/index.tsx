@@ -46,7 +46,6 @@ export default function ModelConvertViewer() {
       if ("outputColorSpace" in renderer) {
         (renderer as unknown as { outputColorSpace: THREE.ColorSpace }).outputColorSpace = THREE.SRGBColorSpace;
       } else {
-        // @ts-expect-error legacy
         renderer.outputEncoding = THREE.sRGBEncoding;
       }
 

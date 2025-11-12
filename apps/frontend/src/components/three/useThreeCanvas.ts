@@ -56,17 +56,8 @@ renderer.toneMappingExposure = 1.0;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.physicallyCorrectLights = true;
 
-type RendererCS = THREE.WebGLRenderer & {
-  outputColorSpace?: THREE.ColorSpace;
-  outputEncoding?: THREE.TextureEncoding;
-};
-// NEW API (r152+)
-const rcs = renderer as RendererCS;
-if ("outputColorSpace" in rcs) {
-  rcs.outputColorSpace = THREE.SRGBColorSpace;
-} else {
-  rcs.outputEncoding = THREE.sRGBEncoding;
-}
+// r152+: tylko outputColorSpace (bez legacy outputEncoding/sRGBEncoding)
+(renderer as unknown as { outputColorSpace?: THREE.ColorSpace }).outputColorSpace = THREE.SRGBColorSpace;
 
     // Ustaw DPR; clamp do 2 dla wydajności (wysokie DPR na mobilkach bywa zabójcze)
     renderer.setPixelRatio(Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1, 2));
