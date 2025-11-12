@@ -12,7 +12,9 @@
     "shader": "Shader: animowany gradient",
     "instanced": "InstancedMesh: wiele obiektów",
     "LOD": "LOD: różne poziomy szczegółowości",
-    "brushripple": "Pędzel & Falowanie: interaktywny efekt falowania"
+    "brushripple": "Pędzel & Falowanie: interaktywny efekt falowania",
+    "gaussianSplatDemo": "Podgląd Gaussian Splatting w Three.js: ładowanie plików .splat/.ksplat, skalowanie i HUD z FPS (DropInViewer bez osobnego canvasu).",
+    "modelConvertViewer": "Przeglądarka i konwerter 3D (bez backendu)"
   },
   "tooltips": {
   "instanceColors": "Kolor per instancja: każda kopia może mieć inny kolor, ale nadal renderujemy jednym draw callem (Instanced), bo kolor jest atrybutem, nie osobnym materiałem.",

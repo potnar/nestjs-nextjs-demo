@@ -50,6 +50,20 @@ export function useThreeCanvas({ onBuild }: { onBuild: Build }) {
     camera.lookAt(0, 0, 0);                   // patrz na środek
 
     const renderer = new THREE.WebGLRenderer({ antialias: true }); // renderer WebGL z wygładzaniem
+
+// 🔧 kolory i tonemapping
+renderer.toneMappingExposure = 1.0;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.physicallyCorrectLights = true;
+
+// NEW API (r152+)
+if ("outputColorSpace" in renderer) {
+  (renderer as any).outputColorSpace = THREE.SRGBColorSpace;
+} else {
+  // OLD API (<= r151)
+  (renderer as any).outputEncoding = THREE.sRGBEncoding;
+}
+
     // Ustaw DPR; clamp do 2 dla wydajności (wysokie DPR na mobilkach bywa zabójcze)
     renderer.setPixelRatio(Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1, 2));
     renderer.setSize(w, h);                   // rozmiar bufora + stylów (updateStyle domyślnie true)

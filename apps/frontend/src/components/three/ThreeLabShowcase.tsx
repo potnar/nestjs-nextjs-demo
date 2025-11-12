@@ -18,8 +18,10 @@ const Shader   = dynamic(() => import("./examples/Shader/index"),   { ssr: false
 const Instanced = dynamic(() => import("./examples/Instanced"), { ssr: false });
 const LOD = dynamic(() => import("./examples/LOD"), { ssr: false });
 const BrushRipple = dynamic(() => import("./examples/BrushRipple"), { ssr: false });
+const GaussianSplatDemo = dynamic(() => import("./examples/GaussianSplatDemo"), { ssr: false })
+const ModelConvertViewer = dynamic(() => import("./examples/ModelConvertViewer"), { ssr: false })
 
-const EXAMPLE_KEYS: ExampleKey[] = ["minimal", "raycast", "shader", "instanced", "LOD", "brushripple"];
+const EXAMPLE_KEYS: ExampleKey[] = ["minimal", "raycast", "shader", "instanced", "LOD", "brushripple", "gaussianSplatDemo", "modelConvertViewer"];
 
 export default function ThreeLabShowcase() {
   const t = useTranslations();
@@ -32,6 +34,8 @@ export default function ThreeLabShowcase() {
       case "instanced": return Instanced;
       case "LOD": return LOD;
       case "brushripple": return BrushRipple;
+      case "gaussianSplatDemo": return GaussianSplatDemo;
+      case "modelConvertViewer": return ModelConvertViewer;
       default:        return Minimal;
     }
   }, [key]);

@@ -12,7 +12,9 @@
     "shader": "Shader: animated gradient",
     "instanced": "InstancedMesh: many objects",
     "LOD": "LOD: levels of detail",
-    "brushripple": "Brush & Ripple: interactive ripple effect"
+    "brushripple": "Brush & Ripple: interactive ripple effect",
+    "gaussianSplatDemo":"Gaussian Splat: point-cloud (NeRF-like)",
+    "modelConvertViewer": "3D Viewer & Converter (client-only)"
   },
   "tooltips": {
     "instanceColors": "Give each copy its own color without new materials — in Instanced mode draw calls stay ≈ 1.",
