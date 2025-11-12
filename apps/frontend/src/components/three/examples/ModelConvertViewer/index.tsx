@@ -46,7 +46,7 @@ export default function ModelConvertViewer() {
       (renderer as unknown as { outputColorSpace: THREE.ColorSpace }).outputColorSpace = THREE.SRGBColorSpace;
       
 
-      scene.background = new THREE.Color(0x0b1020);
+      scene.background = new THREE.Color("#f3f4f6");
       scene.add(new THREE.GridHelper(60, 60, 0x2a2f3b, 0x1a1e28));
 
       const amb = new THREE.AmbientLight(0xffffff, 0.2);
@@ -114,49 +114,46 @@ export default function ModelConvertViewer() {
   });
 
   // Import wielu plików (główny + sidecary)
-  async function handleFiles(files: File[]): Promise<void> {
-    setError(null);
-    try {
-      const prio: Record<string, number> = { glb: 1, gltf: 2, obj: 3, fbx: 4, stl: 5, ply: 6 };
-      const main = files
-        .map((f) => ({ f, ext: inferExt(f.name) }))
-        .filter((x) => x.ext)
-        .sort((a, b) => prio[a.ext as string] - prio[b.ext as string])[0]?.f;
+ async function handleFiles(files: File[]) {
+  setError(null);
+  try {
+    // wybierz główny plik po priorytecie
+    const prio: Record<string, number> = { glb: 1, gltf: 2, obj: 3, fbx: 4, stl: 5, ply: 6 };
+    const main = files
+      .map(f => ({ f, ext: inferExt(f.name) }))
+      .filter(x => x.ext)
+      .sort((a,b) => (prio[a.ext!] - prio[b.ext!]))[0]?.f;
 
-      if (!main) throw new Error("Nie znaleziono obsługiwanego pliku.");
-      const sidecars = files.filter((f) => f !== main);
+    if (!main) throw new Error("Nie znaleziono obsługiwanego pliku.");
 
-      const obj = await loadFileToObject(main, sidecars, rendererRef.current ?? undefined);
+    const sidecars = files.filter(f => f !== main);
 
-      // popraw kolor spaces i env intensities
-      fixMaterialColorSpaces(obj);
-      obj.traverse((o) => {
-        const mesh = o as THREE.Mesh;
-        if (!mesh.isMesh || !mesh.material) return;
-        const apply = (m: THREE.Material) => {
-          if ("envMapIntensity" in m) (m as THREE.MeshStandardMaterial).envMapIntensity = 1.5;
-          m.needsUpdate = true;
-        };
-        if (Array.isArray(mesh.material)) {
-          mesh.material.forEach(apply);
-        } else {
-          apply(mesh.material);
-        }
-      });
+    // 1) wczytaj model (przekazujemy renderer do KTX2 detectSupport, jeśli potrzeba)
+    const obj = await loadFileToObject(main, sidecars, rendererRef.current || undefined);
 
-      if (rootRef.current) {
-        if (currentRef.current) rootRef.current.remove(currentRef.current);
-        rootRef.current.add(obj);
-        currentRef.current = obj;
-      }
+    // 2) 🔧 NAPRAW KOLORY (ustaw poprawne colorSpace na teksturach/materialach)
+    fixMaterialColorSpaces(obj);
 
-      const base = main.name.replace(/\.[^.]+$/, "") || "model";
-      setName(base);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Nie udało się wczytać modelu.";
-      setError(msg);
+    // 3) (opcjonalnie) AUTO-CENTROWANIE natychmiast po imporcie,
+    //    jeżeli w selekcie wybrano "center" albo "bottom"
+    if (centerChoice === "center" || centerChoice === "bottom") {
+      centerObject(obj, centerChoice as CenterMode);
     }
+
+    // 4) podmień obiekt w scenie
+    if (rootRef.current) {
+      if (currentRef.current) rootRef.current.remove(currentRef.current);
+      rootRef.current.add(obj);
+      currentRef.current = obj;
+    }
+
+    // nazwa pliku -> nazwa eksportu
+    const base = (main.name.replace(/\.[^.]+$/,"") || "model");
+    setName(base);
+  } catch (e: unknown) {
+    setError((e as Error)?.message ?? "Nie udało się wczytać modelu.");
   }
+}
 
   function onDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -169,14 +166,6 @@ export default function ModelConvertViewer() {
   function onDragOver(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     e.stopPropagation();
-  }
-
-  // ręczne centrowanie
-  function applyCentering(): void {
-    if (!currentRef.current) return;
-    if (centerChoice === "center" || centerChoice === "bottom") {
-      centerObject(currentRef.current, centerChoice);
-    }
   }
 
   // skala
@@ -200,6 +189,14 @@ export default function ModelConvertViewer() {
       else setWF(mesh.material);
     });
   }, [wire]);
+
+  useEffect(() => {
+  if (!currentRef.current) return;
+  if (centerChoice === "center" || centerChoice === "bottom") {
+    centerObject(currentRef.current, centerChoice as CenterMode);
+  }
+  // "none" nic nie robi
+}, [centerChoice]);
 
   return (
     <div className="grid grid-cols-12 gap-4">
@@ -277,7 +274,6 @@ export default function ModelConvertViewer() {
                 <SelectItem value="bottom">Na ziemi (Y=0)</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={applyCentering}>Zastosuj centrowanie</Button>
           </div>
 
           {/* Eksport */}
