@@ -43,11 +43,9 @@ export default function ModelConvertViewer() {
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.0;
       renderer.physicallyCorrectLights = true;
-      if ("outputColorSpace" in renderer) {
-        (renderer as unknown as { outputColorSpace: THREE.ColorSpace }).outputColorSpace = THREE.SRGBColorSpace;
-      } else {
-        renderer.outputEncoding = THREE.sRGBEncoding;
-      }
+   
+      (renderer as unknown as { outputColorSpace: THREE.ColorSpace }).outputColorSpace = THREE.SRGBColorSpace;
+      
 
       scene.background = new THREE.Color(0x0b1020);
       scene.add(new THREE.GridHelper(60, 60, 0x2a2f3b, 0x1a1e28));
