@@ -8,129 +8,109 @@ const importPLYExporter  = () => import("three/examples/jsm/exporters/PLYExporte
 const importUSDZExporter = () => import("three/examples/jsm/exporters/USDZExporter.js");
 
 export type ExportFormat = "glb" | "gltf" | "obj" | "stl" | "ply" | "usdz";
+type GLTFJSON = Record<string, unknown>;
 
-/** Normalizuje wynik eksportera do prawdziwego ArrayBuffer (obsługa Uint8Array/SharedArrayBuffer). */
-function ensureArrayBuffer(result: unknown): ArrayBuffer {
-  if (result instanceof ArrayBuffer) return result;
-  if (result instanceof Uint8Array) {
-    return result.buffer.slice(result.byteOffset, result.byteOffset + result.byteLength);
-  }
-  const u8 = new Uint8Array(result as ArrayBufferLike);
-  const ab = new ArrayBuffer(u8.byteLength);
-  new Uint8Array(ab).set(u8);
-  return ab;
-}
-
-/** Pobiera blob jako plik. */
-function download(blob: Blob, filename: string) {
+function saveBlob(data: BlobPart, mime: string, filename: string) {
+  const blob = new Blob([data], { type: mime });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
+  a.href = url;
   a.download = filename;
-  document.body.appendChild(a);
   a.click();
-  setTimeout(() => {
-    URL.revokeObjectURL(a.href);
-    document.body.removeChild(a);
-  }, 0);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export async function exportObject(object: THREE.Object3D, format: ExportFormat, fileBase = "model") {
-  switch (format) {
+function ensureArrayBuffer(x: unknown): ArrayBuffer {
+  if (x instanceof ArrayBuffer) return x;
+  if (x instanceof Uint8Array) return x.buffer;
+  throw new Error("Expected ArrayBuffer-like result");
+}
+
+export async function exportObject(
+  root: THREE.Object3D,
+  fmt: ExportFormat,
+  name: string
+): Promise<void> {
+  switch (fmt) {
     case "glb": {
       const { GLTFExporter } = await importGLTFExporter();
-      const exp = new GLTFExporter();
-
-      const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-        try {
-          const parseAny = exp.parse as unknown as (
-            input: any,
-            onDone: (result: unknown) => void,
-            options?: any
-          ) => void;
-
-          parseAny(
-            object,
-            (result) => resolve(ensureArrayBuffer(result)),
-            { binary: true }
-          );
-        } catch (e) {
-          reject(e as Error);
-        }
+      const exporter = new GLTFExporter();
+      await new Promise<void>((resolve, reject) => {
+        exporter.parse(
+          root,
+          (result: ArrayBuffer | GLTFJSON) => {
+            const ab = result instanceof ArrayBuffer ? result : new TextEncoder().encode(JSON.stringify(result)).buffer;
+            // GLB powinno zwrócić ArrayBuffer; fallback dla bezpieczeństwa
+            saveBlob(ab, "model/gltf-binary", `${name}.glb`);
+            resolve();
+          },
+          (err: unknown) => reject(err),
+          { binary: true, onlyVisible: true, includeCustomExtensions: true }
+        );
       });
-
-      return download(new Blob([arrayBuffer], { type: "model/gltf-binary" }), `${fileBase}.glb`);
+      break;
     }
 
     case "gltf": {
       const { GLTFExporter } = await importGLTFExporter();
-      const exp = new GLTFExporter();
-
-      const json = await new Promise<Record<string, unknown>>((resolve, reject) => {
-        try {
-          const parseAny = exp.parse as unknown as (
-            input: any,
-            onDone: (result: unknown) => void,
-            options?: any
-          ) => void;
-
-          parseAny(
-            object,
-            (result) => resolve(result as Record<string, unknown>),
-            { binary: false }
-          );
-        } catch (e) {
-          reject(e as Error);
-        }
+      const exporter = new GLTFExporter();
+      await new Promise<void>((resolve, reject) => {
+        exporter.parse(
+          root,
+          (result: ArrayBuffer | GLTFJSON) => {
+            const json = result instanceof ArrayBuffer
+              ? new TextDecoder().decode(new Uint8Array(result))
+              : JSON.stringify(result, null, 2);
+            saveBlob(json, "model/gltf+json", `${name}.gltf`);
+            resolve();
+          },
+          (err: unknown) => reject(err),
+          { binary: false, onlyVisible: true, includeCustomExtensions: true, embedImages: true }
+        );
       });
-
-      return download(new Blob([JSON.stringify(json)], { type: "model/gltf+json" }), `${fileBase}.gltf`);
+      break;
     }
 
     case "obj": {
       const { OBJExporter } = await importOBJExporter();
-      const exp = new OBJExporter();
-      const txt = exp.parse(object);
-      return download(new Blob([txt], { type: "text/plain" }), `${fileBase}.obj`);
+      const exporter = new OBJExporter();
+      const text: string = exporter.parse(root);
+      saveBlob(text, "text/plain", `${name}.obj`);
+      break;
     }
 
     case "stl": {
       const { STLExporter } = await importSTLExporter();
-      const exp = new STLExporter();
-      const txt = exp.parse(object);
-      return download(new Blob([txt], { type: "model/stl" }), `${fileBase}.stl`);
+      const exporter = new STLExporter();
+      const res = exporter.parse(root, { binary: true });
+      const ab: ArrayBuffer = res instanceof ArrayBuffer ? res : ensureArrayBuffer(res as unknown);
+      saveBlob(ab, "model/stl", `${name}.stl`);
+      break;
     }
 
     case "ply": {
       const { PLYExporter } = await importPLYExporter();
-      const exp = new PLYExporter();
-      const txt = await new Promise<string>((res) => exp.parse(object, res, { littleEndian: true }));
-      return download(new Blob([txt], { type: "application/octet-stream" }), `${fileBase}.ply`);
+      const exporter = new PLYExporter();
+      const res = exporter.parse(root, { binary: true });
+      const ab: ArrayBuffer = res instanceof Uint8Array ? res.buffer : ensureArrayBuffer(res as unknown);
+      saveBlob(ab, "model/ply", `${name}.ply`);
+      break;
     }
 
     case "usdz": {
       const { USDZExporter } = await importUSDZExporter();
-      const exp = new USDZExporter();
-
-      const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-        try {
-          const parseAny = exp.parse as unknown as (
-            obj: THREE.Object3D,
-            onDone: (result: unknown) => void,
-            onError?: (err: unknown) => void,
-            options?: unknown
-          ) => void;
-
-          parseAny(
-            object,
-            (result) => resolve(ensureArrayBuffer(result)),
-            (err) => reject(err)
-          );
-        } catch (e) {
-          reject(e as Error);
-        }
+      const exporter = new USDZExporter();
+      await new Promise<void>((resolve, reject) => {
+        exporter.parse(
+          root,
+          (result: Uint8Array<ArrayBuffer>) => {
+            saveBlob(result, "model/vnd.usdz+zip", `${name}.usdz`);
+            resolve();
+          },
+          (err: unknown) => reject(err)
+        );
       });
-
-      return download(new Blob([arrayBuffer], { type: "model/vnd.usdz+zip" }), `${fileBase}.usdz`);
+      break;
     }
   }
 }

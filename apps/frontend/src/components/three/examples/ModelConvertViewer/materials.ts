@@ -18,23 +18,17 @@ type KnownMat =
   | (THREE.MeshPhysicalMaterial & Maps)
   | (THREE.Material & Maps);
 
-/** r152+ vs ≤ r151 compatible setter (bez any) */
+// r152+: ustawiamy colorSpace na teksturach (zero importów LinearEncoding/sRGBEncoding)
 function setTexSRGB(tex?: THREE.Texture) {
   if (!tex) return;
   if ("colorSpace" in tex) {
     (tex as THREE.Texture & { colorSpace: THREE.ColorSpace }).colorSpace = THREE.SRGBColorSpace;
-  } else {
-    // @ts-expect-error legacy three
-    (tex as THREE.Texture).encoding = THREE.sRGBEncoding;
   }
 }
 function setTexLinear(tex?: THREE.Texture) {
   if (!tex) return;
   if ("colorSpace" in tex) {
     (tex as THREE.Texture & { colorSpace: THREE.ColorSpace }).colorSpace = THREE.LinearSRGBColorSpace;
-  } else {
-    // @ts-expect-error legacy three
-    (tex as THREE.Texture).encoding = THREE.LinearEncoding;
   }
 }
 
@@ -62,7 +56,6 @@ export function fixMaterialColorSpaces(root: THREE.Object3D) {
       mat.needsUpdate = true;
     };
 
-    if (Array.isArray(mesh.material)) mesh.material.forEach(apply);
-    else apply(mesh.material);
+    Array.isArray(mesh.material) ? mesh.material.forEach(apply) : apply(mesh.material);
   });
 }

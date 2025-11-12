@@ -298,9 +298,8 @@ export default function ModelConvertViewer() {
             <Button
               disabled={!currentRef.current}
               onClick={() => {
-                if (currentRef.current) {
-                  exportObject(currentRef.current, exportFmt, name);
-                }
+                const obj = currentRef.current;
+                if (obj) exportObject(obj, exportFmt, name);
               }}
             >
               Eksportuj
