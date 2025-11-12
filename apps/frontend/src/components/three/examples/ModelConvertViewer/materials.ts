@@ -56,6 +56,11 @@ export function fixMaterialColorSpaces(root: THREE.Object3D) {
       mat.needsUpdate = true;
     };
 
-    Array.isArray(mesh.material) ? mesh.material.forEach(apply) : apply(mesh.material);
+    if (Array.isArray(mesh.material)) {
+      mesh.material.forEach(apply);
+    } else {
+      apply(mesh.material);
+    }
+
   });
 }

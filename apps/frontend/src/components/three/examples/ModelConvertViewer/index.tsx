@@ -138,7 +138,11 @@ export default function ModelConvertViewer() {
           if ("envMapIntensity" in m) (m as THREE.MeshStandardMaterial).envMapIntensity = 1.5;
           m.needsUpdate = true;
         };
-        Array.isArray(mesh.material) ? mesh.material.forEach(apply) : apply(mesh.material);
+        if (Array.isArray(mesh.material)) {
+          mesh.material.forEach(apply);
+        } else {
+          apply(mesh.material);
+        }
       });
 
       if (rootRef.current) {
