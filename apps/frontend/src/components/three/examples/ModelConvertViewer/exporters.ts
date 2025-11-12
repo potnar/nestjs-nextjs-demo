@@ -109,7 +109,7 @@ export async function exportObject(
     case "ply": {
       const { PLYExporter } = await importPLYExporter();
       const exporter = new PLYExporter();
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve) => {
         exporter.parse(
           root,
           (res: string | ArrayBuffer) => {
