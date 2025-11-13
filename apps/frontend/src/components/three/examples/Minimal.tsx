@@ -36,7 +36,7 @@ export default function Minimal() {
       // centrowanie kadru:
       if (typeof frame === "function") {
         // ✨ użyj helpera z hooka – idealne wyśrodkowanie i dopasowanie odległości
-        frame(box, { offset: 1.35 });
+        frame(box, { offset: 5 });
       } else {
         // 🔙 fallback, jeśli jeszcze nie masz frame() w hooku
         camera.position.set(4, 3, 6);
