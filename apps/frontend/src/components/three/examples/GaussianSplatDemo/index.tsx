@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -9,15 +10,8 @@ import { Button } from "@/components/ui/button";
 const SPLAT_URL = process.env.NEXT_PUBLIC_GSPLAT_URL;
 
 export default function GaussianSplatDemo() {
-  // jeśli env nie ustawione – nie renderuj komponentu
-  if (!SPLAT_URL) {
-    if (typeof window !== "undefined") {
-      console.error("Missing NEXT_PUBLIC_GSPLAT_URL");
-    }
-    return null;
-  }
-
-  const [path, setPath] = useState(SPLAT_URL);
+  // 🔹 HOOKI – zawsze na górze, bez warunków
+  const [path, setPath] = useState<string>(SPLAT_URL ?? "");
   const [scale, setScale] = useState(1.5);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -25,7 +19,7 @@ export default function GaussianSplatDemo() {
 
   const reloadSplat = (splatPath: string, newScale: number) => {
     const viewer = viewerRef.current;
-    if (!viewer) return;
+    if (!viewer || !splatPath) return;
 
     viewer.clearScenes?.();
 
@@ -41,7 +35,8 @@ export default function GaussianSplatDemo() {
   };
 
   useEffect(() => {
-    if (!containerRef.current || typeof window === "undefined") return;
+    // guard wewnątrz hooka jest OK – nie łamie rules-of-hooks
+    if (!containerRef.current || typeof window === "undefined" || !SPLAT_URL) return;
 
     const viewer = new (GaussianSplats3D as any).Viewer({
       rootElement: containerRef.current,
@@ -52,8 +47,8 @@ export default function GaussianSplatDemo() {
 
     viewerRef.current = viewer;
 
-    // pierwszy load
-    reloadSplat(path, scale);
+    // pierwszy load – bierzemy SPLAT_URL z env
+    reloadSplat(SPLAT_URL, scale);
     (window as any).gsViewer = viewer;
 
     viewer.start?.();
@@ -61,13 +56,23 @@ export default function GaussianSplatDemo() {
     return () => {
       try {
         viewer.dispose?.();
-      } catch (e) {
+      } catch (e: any) {
         console.warn("[GS] dispose error:", e);
       }
       viewerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // tylko mount/unmount
+  }, []); // tylko mount/unmount, celowo ignorujemy zależności
+
+  // 🔹 TERAZ dopiero wczesny return – poniżej hooków
+  if (!SPLAT_URL) {
+    return (
+      <div className="rounded-2xl border p-4 text-sm text-red-400 bg-red-950/40">
+        Missing <code>NEXT_PUBLIC_GSPLAT_URL</code>.  
+        Set it in <code>.env.local</code> i w ustawieniach Vercela.
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-12 gap-4">
@@ -92,6 +97,7 @@ export default function GaussianSplatDemo() {
             <Button
               variant="secondary"
               onClick={() => {
+                if (!SPLAT_URL) return;
                 setPath(SPLAT_URL);
                 reloadSplat(SPLAT_URL, scale);
               }}
@@ -109,7 +115,9 @@ export default function GaussianSplatDemo() {
             onValueChange={([v]) => {
               const newScale = v;
               setScale(newScale);
-              reloadSplat(path, newScale);
+              if (path) {
+                reloadSplat(path, newScale);
+              }
             }}
           />
 
@@ -120,7 +128,9 @@ export default function GaussianSplatDemo() {
               onClick={() => {
                 const base = 1.5;
                 setScale(base);
-                reloadSplat(path, base);
+                if (path) {
+                  reloadSplat(path, base);
+                }
               }}
             >
               Reset view
@@ -131,7 +141,9 @@ export default function GaussianSplatDemo() {
               onClick={() => {
                 const next = Math.min(scale + 0.5, 4);
                 setScale(next);
-                reloadSplat(path, next);
+                if (path) {
+                  reloadSplat(path, next);
+                }
               }}
             >
               + scale
