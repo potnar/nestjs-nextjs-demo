@@ -1,4 +1,4 @@
-export type ExampleKey = "minimal" | "raycast" | "shader" | "instanced" | "LOD" | "brushripple" | "gaussianSplatDemo" | "modelConvertViewer";
+export type ExampleKey = "minimal" | "raycast" | "shader" | "instanced" | "LOD" | "brushripple" | "gaussianSplatDemo" | "modelConvertViewer" | "minecraftDudeExample";;
 
 export const EXAMPLE_LABELS: Record<ExampleKey, string> = {
   minimal:   "Minimal: PBR + OrbitControls",
@@ -8,5 +8,6 @@ export const EXAMPLE_LABELS: Record<ExampleKey, string> = {
   LOD:       "LOD: levels of detail",
   brushripple: "Brush & Ripple: interactive ripple effect",
   gaussianSplatDemo: "Gaussian Splat: point-cloud (NeRF-like)",
-  modelConvertViewer: "3D Viewer & Converter (client-only)"
+  modelConvertViewer: "3D Viewer & Converter (client-only)",
+  minecraftDudeExample: "Minecraft-like dude: walking animation"
 };

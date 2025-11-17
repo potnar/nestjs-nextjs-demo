@@ -14,14 +14,15 @@
     "LOD": "LOD: różne poziomy szczegółowości",
     "brushripple": "Pędzel & Falowanie: interaktywny efekt falowania",
     "gaussianSplatDemo": "Podgląd Gaussian Splatting w Three.js: ładowanie plików .splat/.ksplat, skalowanie i HUD z FPS (DropInViewer bez osobnego canvasu).",
-    "modelConvertViewer": "Przeglądarka i konwerter 3D (bez backendu)"
+    "modelConvertViewer": "Przeglądarka i konwerter 3D (bez backendu)",
+    "minecraftDudeExample": "Ludzik w stylu Minecraft: widok trzecioosobowy (WASD + mysz)"
   },
   "tooltips": {
-  "instanceColors": "Kolor per instancja: każda kopia może mieć inny kolor, ale nadal renderujemy jednym draw callem (Instanced), bo kolor jest atrybutem, nie osobnym materiałem.",
-  "mode_instanced": "Instancing: wiele kopii tej SAMEJ geometrii i materiału rysowane jedną komendą (1 draw call na kombinację geo+materiał). Zamiast 2000 poleceń „narysuj stożek”, wysyłasz jedno: „narysuj ten stożek 2000× w tych transformacjach”.",
-  "mode_naive": "Każda kopia to osobny Mesh → ≈ N draw calls. Prostsze, ale wolniejsze przy dużym N.",
-  "lod_distance": "Odległość, od której zmienia się poziom szczegółowości (LOD)."
-},
+    "instanceColors": "Kolor per instancja: każda kopia może mieć inny kolor, ale nadal renderujemy jednym draw callem (Instanced), bo kolor jest atrybutem, nie osobnym materiałem.",
+    "mode_instanced": "Instancing: wiele kopii tej SAMEJ geometrii i materiału rysowane jedną komendą (1 draw call na kombinację geo+materiał). Zamiast 2000 poleceń „narysuj stożek”, wysyłasz jedno: „narysuj ten stożek 2000× w tych transformacjach”.",
+    "mode_naive": "Każda kopia to osobny Mesh → ≈ N draw calls. Prostsze, ale wolniejsze przy dużym N.",
+    "lod_distance": "Odległość, od której zmienia się poziom szczegółowości (LOD)."
+  },
   "tips": {
     "extend": "Jak to rozszerzać?"
   },
