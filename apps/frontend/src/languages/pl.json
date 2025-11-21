@@ -15,7 +15,8 @@
     "brushripple": "Pędzel & Falowanie: interaktywny efekt falowania",
     "gaussianSplatDemo": "Podgląd Gaussian Splatting w Three.js: ładowanie plików .splat/.ksplat, skalowanie i HUD z FPS (DropInViewer bez osobnego canvasu).",
     "modelConvertViewer": "Przeglądarka i konwerter 3D (bez backendu)",
-    "minecraftDudeExample": "Ludzik w stylu Minecraft: widok trzecioosobowy (WASD + mysz)"
+    "minecraftDudeExample": "Ludzik w stylu Minecraft: widok trzecioosobowy (WASD + mysz)",
+    "minecraftPathfinding": "Minecraft pathfinding: A* na siatce 2D"
   },
   "tooltips": {
     "instanceColors": "Kolor per instancja: każda kopia może mieć inny kolor, ale nadal renderujemy jednym draw callem (Instanced), bo kolor jest atrybutem, nie osobnym materiałem.",

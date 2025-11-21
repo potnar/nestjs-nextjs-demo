@@ -15,7 +15,8 @@
     "brushripple": "Brush & Ripple: interactive ripple effect",
     "gaussianSplatDemo":"Gaussian Splat: point-cloud (NeRF-like)",
     "modelConvertViewer": "3D Viewer & Converter (client-only)",
-    "minecraftDudeExample": "Minecraft-style dude: 3rd-person controller"
+    "minecraftDudeExample": "Minecraft-style dude: 3rd-person controller",
+    "minecraftPathfinding": "Minecraft pathfinding: A* grid navigation"
   },
   "tooltips": {
     "instanceColors": "Give each copy its own color without new materials — in Instanced mode draw calls stay ≈ 1.",

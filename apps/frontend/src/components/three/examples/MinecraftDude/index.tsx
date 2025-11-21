@@ -1,233 +1,177 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { createMinecraftDude } from "./createMinecraftDude";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { MinecraftDudeFiber, MinecraftDudeHandle } from "./MinecraftDudeFiber";
 
-const MinecraftDudeExample: React.FC = () => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const frameIdRef = useRef<number | null>(null);
+// --- PLAYER / CONTROLLER ----------------------------------------------------
 
+function PlayerController() {
+  const { camera, gl } = useThree();
+
+  const playerRef = useRef<MinecraftDudeHandle | null>(null);
+
+  // „stan” sterowania, trzymany w refach
+  const yawRef = useRef(0);        // kierunek, w który patrzy gracz
+  const pitchRef = useRef(0.25);   // wysokość kamery
+  const distanceRef = useRef(4.5); // dystans kamery
+
+  const pressedRef = useRef<Set<string>>(new Set());
+  const isPointerLockedRef = useRef(false);
+  const controlsActiveRef = useRef(false);
+
+  // stan do animacji rąk/nóg
+  const [isMoving, setIsMoving] = useState(false);
+  const isMovingStateRef = useRef(false);
+
+  // Pointer lock + klawiatura – czysty JS, ale korzystamy z gl.domElement & camera
   useEffect(() => {
-    if (!containerRef.current) return;
+    const canvas = gl.domElement;
 
-    const width = containerRef.current.clientWidth;
-    const height = containerRef.current.clientHeight;
-
-    // SCENA
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x020617);
-    sceneRef.current = scene;
-
-    // KAMERA
-    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100);
-    cameraRef.current = camera;
-
-    // RENDERER
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    containerRef.current.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-
-    // ŚWIATŁA
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-    dirLight.position.set(5, 10, 5);
-    const ambient = new THREE.AmbientLight(0xffffff, 0.4);
-    scene.add(dirLight, ambient);
-
-    // PODŁOGA
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(40, 40),
-      new THREE.MeshStandardMaterial({ color: 0x22c55e })
-    );
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = 0;
-    scene.add(ground);
-
-    // GRACZ
-    const player = createMinecraftDude();
-    player.position.set(0, 0, 0);
-    scene.add(player);
-
-    // ===== STAN KAMERY – widok trzecioosobowy =====
-    let yaw = 0;        // kierunek, w który patrzy gracz
-    let pitch = 0.25;   // wysokość kamery
-    let distance = 4.5; // dystans kamery
-
-    // pointer lock / aktywne sterowanie
-    let isPointerLocked = false;
-    let controlsActive = false;
-
-    const updateCamera = () => {
-      if (!cameraRef.current) return;
-      const cam = cameraRef.current;
-
-      const target = player.position.clone();
-      target.y += 1.6; // głowa
-
-      const offset = new THREE.Vector3(
-        -Math.sin(yaw) * Math.cos(pitch) * distance,
-         Math.sin(pitch) * distance,
-        -Math.cos(yaw) * Math.cos(pitch) * distance
-      );
-
-      cam.position.copy(target).add(offset);
-      cam.lookAt(target);
-    };
-
-    updateCamera();
-
-    const canvas = renderer.domElement;
-
-    // === POINTER LOCK: kliknięcie w canvas → przejęcie kursora ===
     const onCanvasClick = () => {
       canvas.requestPointerLock();
     };
 
     const onPointerLockChange = () => {
       const locked = document.pointerLockElement === canvas;
-      isPointerLocked = locked;
-      controlsActive = locked;
-      // po wyjściu z pointer lock (ESC / klik poza) sterowanie się wyłącza
+      isPointerLockedRef.current = locked;
+      controlsActiveRef.current = locked;
     };
 
-    // obrót kamery myszką (tylko gdy pointer lock aktywny → kursor niewidoczny)
     const onMouseMove = (e: MouseEvent) => {
-      if (!isPointerLocked) return;
+      if (!isPointerLockedRef.current) return;
 
-      const dx = e.movementX; // względny ruch
+      const dx = e.movementX;
       const dy = e.movementY;
-
       const ROT_SPEED = 0.003;
 
-      yaw -= dx * ROT_SPEED;
-      pitch -= dy * ROT_SPEED;
+      yawRef.current -= dx * ROT_SPEED;
+      pitchRef.current -= dy * ROT_SPEED;
 
       const maxPitch = Math.PI / 3;
       const minPitch = -Math.PI / 6;
-      pitch = Math.max(minPitch, Math.min(maxPitch, pitch));
-
-      updateCamera();
+      pitchRef.current = Math.max(minPitch, Math.min(maxPitch, pitchRef.current));
     };
 
     const onWheel = (e: WheelEvent) => {
       const ZOOM_SPEED = 0.0015;
-      distance += e.deltaY * ZOOM_SPEED;
-      distance = Math.max(2.5, Math.min(10, distance));
-      updateCamera();
+      distanceRef.current += e.deltaY * ZOOM_SPEED;
+      distanceRef.current = Math.max(2.5, Math.min(10, distanceRef.current));
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!controlsActiveRef.current) return;
+      pressedRef.current.add(e.code);
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      pressedRef.current.delete(e.code);
     };
 
     canvas.addEventListener("click", onCanvasClick);
     document.addEventListener("pointerlockchange", onPointerLockChange);
     document.addEventListener("mousemove", onMouseMove);
     canvas.addEventListener("wheel", onWheel);
-
-    // ===== KLAWIATURA – WASD =====
-    const pressed = new Set<string>();
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (!controlsActive) return; // nie włączaj sterowania przed kliknięciem
-      pressed.add(e.code);
-    };
-
-    const onKeyUp = (e: KeyboardEvent) => {
-      pressed.delete(e.code);
-    };
-
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
 
-    // ===== PĘTLA GŁÓWNA =====
-    const clock = new THREE.Clock();
-    let elapsed = 0;
-
-    const animate = () => {
-      const dt = clock.getDelta();
-      elapsed += dt;
-
-      let isMoving = false;
-
-      if (controlsActive) {
-        const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
-        const right   = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
-
-        const moveDir = new THREE.Vector3();
-        const speed = 4;
-
-        if (pressed.has("KeyW")) moveDir.add(forward);
-        if (pressed.has("KeyS")) moveDir.sub(forward);
-
-        // A/D – lewo/prawo w stylu gier
-        if (pressed.has("KeyA")) moveDir.add(right);   // lewo
-        if (pressed.has("KeyD")) moveDir.sub(right);   // prawo
-
-        isMoving = moveDir.lengthSq() > 0;
-
-        if (isMoving) {
-          moveDir.normalize();
-          player.position.add(moveDir.multiplyScalar(speed * dt));
-        }
-      }
-
-      // gracz patrzy tam, gdzie kamera (yaw)
-      player.rotation.y = yaw;
-
-      updateCamera();
-
-      const updater =
-        player.userData.update as ((t: number, isMoving: boolean) => void) | undefined;
-      if (updater) {
-        updater(elapsed, isMoving);
-      }
-
-      renderer.render(scene, camera);
-      frameIdRef.current = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
-
-      const { clientWidth, clientHeight } = containerRef.current;
-      rendererRef.current.setSize(clientWidth, clientHeight);
-      cameraRef.current.aspect = clientWidth / clientHeight;
-      cameraRef.current.updateProjectionMatrix();
-    };
-
-    window.addEventListener("resize", handleResize);
-
     return () => {
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
+      canvas.removeEventListener("click", onCanvasClick);
       document.removeEventListener("pointerlockchange", onPointerLockChange);
       document.removeEventListener("mousemove", onMouseMove);
-      canvas.removeEventListener("click", onCanvasClick);
       canvas.removeEventListener("wheel", onWheel);
-
-      if (frameIdRef.current !== null) {
-        cancelAnimationFrame(frameIdRef.current);
-      }
-
-      if (rendererRef.current) {
-        rendererRef.current.dispose();
-        const dom = rendererRef.current.domElement;
-        dom.parentNode?.removeChild(dom);
-      }
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
     };
-  }, []);
+  }, [gl]);
 
+  // Główna pętla – odpowiednik Twojego animate()
+  useFrame((state, dt) => {
+    const player = playerRef.current;
+    if (!player) return;
+
+    const yaw = yawRef.current;
+    const pitch = pitchRef.current;
+    const distance = distanceRef.current;
+
+    // Ruch gracza (WASD)
+    let moving = false;
+
+    if (controlsActiveRef.current) {
+      const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+      const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+      const moveDir = new THREE.Vector3();
+      const speed = 4;
+
+      const pressed = pressedRef.current;
+      if (pressed.has("KeyW")) moveDir.add(forward);
+      if (pressed.has("KeyS")) moveDir.sub(forward);
+      if (pressed.has("KeyA")) moveDir.add(right);
+      if (pressed.has("KeyD")) moveDir.sub(right);
+
+      if (moveDir.lengthSq() > 0) {
+        moving = true;
+        moveDir.normalize();
+        player.position.add(moveDir.multiplyScalar(speed * dt));
+      }
+    }
+
+    // gracz patrzy tam, gdzie kamera (yaw)
+    player.rotation.y = yaw;
+
+    // Kamera third-person
+    const target = player.position.clone();
+    target.y += 1.6; // głowa
+
+    const offset = new THREE.Vector3(
+      -Math.sin(yaw) * Math.cos(pitch) * distance,
+      Math.sin(pitch) * distance,
+      -Math.cos(yaw) * Math.cos(pitch) * distance
+    );
+
+    camera.position.copy(target).add(offset);
+    camera.lookAt(target);
+
+    // aktualizacja isMoving tylko gdy się zmienia, żeby nie robić setState co frame
+    if (moving !== isMovingStateRef.current) {
+      isMovingStateRef.current = moving;
+      setIsMoving(moving);
+    }
+  });
+
+  return <MinecraftDudeFiber ref={playerRef} isMoving={isMoving} />;
+}
+
+// --- GŁÓWNY KOMPONENT -------------------------------------------------------
+
+const MinecraftDudeExample: React.FC = () => {
   return (
     <div className="relative w-full h-[400px] rounded-xl border border-neutral-800 overflow-hidden">
-      <div ref={containerRef} className="w-full h-full cursor-crosshair" />
+      <Canvas camera={{ fov: 60, position: [0, 3, 6] }} shadows>
+        <color attach="background" args={["#020617"]} />
+
+        {/* Światła */}
+        <ambientLight intensity={0.4} />
+        <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
+
+        {/* Ziemia */}
+        <mesh
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[0, 0, 0]}
+          receiveShadow
+        >
+          <planeGeometry args={[40, 40]} />
+          <meshStandardMaterial color="#22c55e" />
+        </mesh>
+
+        {/* Gracz + sterowanie */}
+        <PlayerController />
+      </Canvas>
+
       {/* Overlay z kontrolkami */}
       <div className="pointer-events-none absolute top-2 left-2 bg-black/70 text-xs text-slate-100 px-3 py-2 rounded-md space-y-1">
-        <div className="font-semibold text-sm">Controls (3rd person)</div>
+        <div className="font-semibold text-sm">Controls (3rd person – fiber)</div>
         <div>Click on canvas to capture mouse</div>
         <div>W / A / S / D – move</div>
         <div>Move mouse – rotate camera & player</div>
