@@ -22,9 +22,9 @@ const GaussianSplatDemo = dynamic(() => import("./examples/GaussianSplatDemo"), 
 const ModelConvertViewer = dynamic(() => import("./examples/ModelConvertViewer"), { ssr: false })
 const MinecraftDudeExample = dynamic(() => import("./examples/MinecraftDude"), { ssr: false });
 const MinecraftPathfindingDemo = dynamic( () => import("./examples/MinecraftPathfindingDemo"), { ssr: false });
+const IoTRoomScene = dynamic(() => import("./examples/IoTRoomScene"), { ssr: false })
 
-
-const EXAMPLE_KEYS: ExampleKey[] = ["minimal", "raycast", "shader", "instanced", "LOD", "brushripple", "gaussianSplatDemo", "modelConvertViewer", "minecraftDudeExample", "minecraftPathfinding"];
+const EXAMPLE_KEYS: ExampleKey[] = ["minimal", "raycast", "shader", "instanced", "LOD", "brushripple", "gaussianSplatDemo", "modelConvertViewer", "minecraftDudeExample", "minecraftPathfinding", "IoTRoomScene"];
 
 export default function ThreeLabShowcase() {
   const t = useTranslations();
@@ -41,6 +41,7 @@ export default function ThreeLabShowcase() {
       case "modelConvertViewer": return ModelConvertViewer;
       case "minecraftDudeExample": return MinecraftDudeExample;
       case "minecraftPathfinding": return MinecraftPathfindingDemo;
+      case "IoTRoomScene": return IoTRoomScene;
       default:        return Minimal;
     }
   }, [key]);

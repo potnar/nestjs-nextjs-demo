@@ -1,4 +1,15 @@
-export type ExampleKey = "minimal" | "raycast" | "shader" | "instanced" | "LOD" | "brushripple" | "gaussianSplatDemo" | "modelConvertViewer" | "minecraftDudeExample" | "minecraftPathfinding";
+export type ExampleKey =
+  | "minimal"
+  | "raycast"
+  | "shader"
+  | "instanced"
+  | "LOD"
+  | "brushripple"
+  | "gaussianSplatDemo"
+  | "modelConvertViewer"
+  | "minecraftDudeExample"
+  | "minecraftPathfinding"
+  | "IoTRoomScene";
 
 export const EXAMPLE_LABELS: Record<ExampleKey, string> = {
   minimal:   "Minimal: PBR + OrbitControls",
@@ -10,5 +21,6 @@ export const EXAMPLE_LABELS: Record<ExampleKey, string> = {
   gaussianSplatDemo: "Gaussian Splat: point-cloud (NeRF-like)",
   modelConvertViewer: "3D Viewer & Converter (client-only)",
   minecraftDudeExample: "Minecraft-like dude: walking animation",
-  minecraftPathfinding: "Minecraft pathfinding (A*)"
+  minecraftPathfinding: "Minecraft pathfinding (A*)",
+  IoTRoomScene: "IoT room: 3D mapa infrastruktury",
 };
