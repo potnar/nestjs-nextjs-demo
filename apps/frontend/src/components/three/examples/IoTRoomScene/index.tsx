@@ -23,7 +23,8 @@ type Device = {
   rotation?: number;
   name: string;
   status: Status;
-  load: number; // 0.0 - 1.0
+  load: number;
+  speed?: number;
 };
 
 const INITIAL_DEVICES: Device[] = [
@@ -32,7 +33,7 @@ const INITIAL_DEVICES: Device[] = [
   { id: "srv-3", type: "server", x: -3, z: 2, name: "Backup Unit", status: "ok", load: 0.1 },
   { id: "eng-1", type: "engine", x: 3, z: -2, rotation: -Math.PI/4, name: "Turbina Chłodzenia 1", status: "ok", load: 0.4 },
   { id: "eng-2", type: "engine", x: 3, z: 2, rotation: -Math.PI/4, name: "Turbina Chłodzenia 2", status: "critical", load: 0.95 },
-  { id: "conv-1", type: "conveyor", x: 0, z: 0, rotation: 0, name: "Magistrala Danych", status: "ok", load: 0.5 },
+  { id: "conv-1", type: "conveyor", x: 0, z: 0, rotation: 0, name: "Magistrala Danych", status: "ok", load: 0.1, speed: 0.5},
 ];
 
 // --- KOLORY I POMOCNIKI ---
@@ -336,7 +337,7 @@ function ConveyorBelt({ device }: { device: Device }) {
     const color = useMemo(() => getStatusColor(device.status), [device.status]);
 
     useFrame((state) => {
-        const speed = 1 + device.load * 4;
+        const speed = 1 + device.load * 2;
         const time = state.clock.elapsedTime * speed;
         
         itemRefs.current.forEach((mesh, i) => {
@@ -380,7 +381,7 @@ function ConveyorBelt({ device }: { device: Device }) {
                     <meshStandardMaterial 
                         color={color} 
                         emissive={color}
-                        emissiveIntensity={0.5 + device.load}
+                        emissiveIntensity={0.8 + device.load}
                         toneMapped={false}
                     />
                 </mesh>
@@ -508,7 +509,7 @@ const IoTRoomScene: React.FC = () => {
         prev.map((d) => {
           if (d.id !== id) return d;
   
-          let next: Device = { ...d, ...updates };
+          const next: Device = { ...d, ...updates };
   
           // jeśli zmieniamy load suwakiem, a nie klikamy przycisku statusu –
           // automatycznie wylicz status na podstawie progu
