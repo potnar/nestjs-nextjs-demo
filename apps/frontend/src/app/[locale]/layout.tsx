@@ -8,7 +8,7 @@ type Locale = "pl" | "en";
 type Props = {
   children: ReactNode;
   // zgodnie z Twoim LayoutProps -> params jako Promise
-  params: Promise<{ locale: Locale }>;
+  params: Promise<{ locale: string }>;
 };
 
 export default async function LocaleLayout({ children, params }: Props) {
