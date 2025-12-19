@@ -23,28 +23,60 @@ const ModelConvertViewer = dynamic(() => import("./examples/ModelConvertViewer")
 const MinecraftDudeExample = dynamic(() => import("./examples/MinecraftDude"), { ssr: false });
 const MinecraftPathfindingDemo = dynamic( () => import("./examples/MinecraftPathfindingDemo"), { ssr: false });
 const IoTRoomScene = dynamic(() => import("./examples/IoTRoomScene"), { ssr: false })
+const ProjectHub3D = dynamic(() => import("./examples/ProjectHub3D"), { ssr: false });
+const Galaxy = dynamic(() => import("./examples/Galaxy"), { ssr: false });
 
-const EXAMPLE_KEYS: ExampleKey[] = ["minimal", "raycast", "shader", "instanced", "LOD", "brushripple", "gaussianSplatDemo", "modelConvertViewer", "minecraftDudeExample", "minecraftPathfinding", "IoTRoomScene"];
+const EXAMPLE_KEYS: ExampleKey[] = [
+  "galaxy",
+  "projectHub",            // nowy domyślny przykład
+  "minimal",
+  "raycast",
+  "shader",
+  "instanced",
+  "LOD",
+  "brushripple",
+  "gaussianSplatDemo",
+  "modelConvertViewer",
+  "minecraftDudeExample",
+  "minecraftPathfinding",
+  "IoTRoomScene",
+];
 
 export default function ThreeLabShowcase() {
   const t = useTranslations();
-  const [key, setKey] = useState<ExampleKey>("minimal");
+  const [key, setKey] = useState<ExampleKey>("projectHub");
 
   const Current = useMemo(() => {
     switch (key) {
-      case "raycast": return Raycast;
-      case "shader":  return Shader;
-      case "instanced": return Instanced;
-      case "LOD": return LOD;
-      case "brushripple": return BrushRipple;
-      case "gaussianSplatDemo": return GaussianSplatDemo;
-      case "modelConvertViewer": return ModelConvertViewer;
-      case "minecraftDudeExample": return MinecraftDudeExample;
-      case "minecraftPathfinding": return MinecraftPathfindingDemo;
-      case "IoTRoomScene": return IoTRoomScene;
-      default:        return Minimal;
+      case "projectHub":
+        return ProjectHub3D;
+      case "galaxy":
+        return Galaxy;
+      case "raycast":
+        return Raycast;
+      case "shader":
+        return Shader;
+      case "instanced":
+        return Instanced;
+      case "LOD":
+        return LOD;
+      case "brushripple":
+        return BrushRipple;
+      case "gaussianSplatDemo":
+        return GaussianSplatDemo;
+      case "modelConvertViewer":
+        return ModelConvertViewer;
+      case "minecraftDudeExample":
+        return MinecraftDudeExample;
+      case "minecraftPathfinding":
+        return MinecraftPathfindingDemo;
+      case "IoTRoomScene":
+        return IoTRoomScene;
+      default:
+        return Minimal;
     }
   }, [key]);
+  
 
   const labelFor = (k: ExampleKey) => t(`example.${k}`);
 
