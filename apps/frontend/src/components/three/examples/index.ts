@@ -9,6 +9,7 @@ export type ExampleKey =
   | "gaussianSplatDemo"
   | "modelConvertViewer"
   | "minecraftDudeExample"
+  | "minecraftPathfinding"
   | "IoTRoomScene"
   | "galaxy";
 
