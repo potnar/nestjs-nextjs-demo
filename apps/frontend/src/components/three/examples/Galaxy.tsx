@@ -162,6 +162,10 @@ export default function Galaxy() {
             <div className="text-sm font-medium mb-2">Randomness: {randomness}</div>
             <Slider value={[randomness]} min={0} max={2} step={0.01} onValueChange={(v) => setRandomness(v[0])} />
           </div>
+          <div>
+            <div className="text-sm font-medium mb-2">Randomness Power: {randomnessPower}</div>
+            <Slider value={[randomnessPower]} min={1} max={10} step={0.1} onValueChange={(v) => setRandomnessPower(v[0])} />
+          </div>
            {/* Colors roughly */}
            <div className="flex gap-2 items-center justify-between">
               <span className="text-sm">Kolor wew.</span>

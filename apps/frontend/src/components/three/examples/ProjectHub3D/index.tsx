@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Html } from "@react-three/drei";
 import * as THREE from "three";
+import Image from "next/image";
 
 type ProjectCategory = "3d" | "backend" | "ai" | "iot" | "other";
 type FilterCategory = ProjectCategory | "all";
@@ -222,10 +223,11 @@ function ProjectScreen({ project }: { project: Project | null }) {
       <div className="relative w-[260px] md:w-[320px] rounded-xl overflow-hidden border border-sky-500/60 bg-slate-900/80 shadow-[0_0_40px_rgba(56,189,248,0.4)] backdrop-blur-md">
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-sky-500/20 via-transparent to-sky-500/10" />
         {project ? (
-          <img
+          <Image
             src={project.thumbnail}
             alt={project.name}
-            className="w-full h-[180px] object-cover"
+            fill
+            className="object-cover"
           />
         ) : (
           <div className="w-full h-[180px] flex items-center justify-center text-xs text-slate-400">
@@ -303,10 +305,11 @@ function ProjectThumbnail({ project }: { project: Project }) {
   return (
     <div className="w-full">
       <div className="relative w-full aspect-video overflow-hidden rounded-md border border-slate-700 bg-slate-900/70">
-        <img
+        <Image
           src={project.thumbnail}
           alt={project.name}
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+          fill
+          className="object-cover transition-transform duration-500 hover:scale-105"
         />
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/50 via-transparent to-transparent" />
       </div>
@@ -339,10 +342,11 @@ function OtherThumbnails({
               className="relative w-16 h-12 rounded-md overflow-hidden border border-slate-700 hover:border-sky-500 transition flex-shrink-0"
               title={p.name}
             >
-              <img
+              <Image
                 src={p.thumbnail}
                 alt={p.name}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
               <div className="absolute inset-0 bg-black/30" />
               <span className="absolute bottom-0 left-0 right-0 text-[9px] px-1 pb-0.5 text-slate-100 truncate bg-black/60">
