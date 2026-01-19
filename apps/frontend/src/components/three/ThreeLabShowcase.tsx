@@ -71,7 +71,9 @@ export default function ThreeLabShowcase() {
   const Current = useMemo(() => {
     switch (key) {
       case "spaceHub":
-        return () => <SpaceHub3D onSelect={setKey} />;
+        return function SpaceHubWrapper() {
+          return <SpaceHub3D onSelect={setKey} />;
+        };
       case "projectHub":
         return ProjectHub3D;
       case "galaxy":

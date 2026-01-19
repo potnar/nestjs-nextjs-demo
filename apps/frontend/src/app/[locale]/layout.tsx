@@ -3,8 +3,6 @@ import { NextIntlClientProvider, AbstractIntlMessages } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { ReactNode } from "react";
 
-type Locale = "pl" | "en";
-
 type Props = {
   children: ReactNode;
   // zgodnie z Twoim LayoutProps -> params jako Promise

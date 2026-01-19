@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useRef, useState, useMemo } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import React, { useState, useMemo } from "react";
+import { Canvas } from "@react-three/fiber";
 import {
   OrbitControls,
   Float,
@@ -9,7 +9,6 @@ import {
   Points,
   PointMaterial,
   Stars,
-  PerspectiveCamera,
 } from "@react-three/drei";
 import * as THREE from "three";
 import { EXAMPLE_LABELS, type ExampleKey } from "../index";
@@ -43,7 +42,6 @@ export default function SpaceHub3D({ onSelect }: SpaceHub3DProps) {
               key={key}
               index={index}
               total={Object.keys(EXAMPLE_LABELS).length}
-              id={key as ExampleKey}
               label={label}
               onClick={() => onSelect(key as ExampleKey)}
             />
@@ -79,13 +77,11 @@ export default function SpaceHub3D({ onSelect }: SpaceHub3DProps) {
 function HubNode({
   index,
   total,
-  id,
   label,
   onClick,
 }: {
   index: number;
   total: number;
-  id: ExampleKey;
   label: string;
   onClick: () => void;
 }) {
