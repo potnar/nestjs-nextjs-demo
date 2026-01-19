@@ -23,6 +23,7 @@ export default function Navbar() {
 
   const links: NavLink[] = [
     { href: "/", labelPL: "Hub", labelEN: "Hub" },
+    { href: "/3d-hub", labelPL: "3D Hub 🌌", labelEN: "3D Hub 🌌" },
     { href: "/threejs", labelPL: "3D Lab", labelEN: "3D Lab" },
     { href: "/typescript/faq", labelPL: "TS FAQ", labelEN: "TS FAQ" },
     { href: "/weight", labelPL: "Waga", labelEN: "Weight" },
