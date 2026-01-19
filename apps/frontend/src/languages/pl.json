@@ -18,7 +18,9 @@
     "minecraftDudeExample": "Ludzik w stylu Minecraft: widok trzecioosobowy (WASD + mysz)",
     "minecraftPathfinding": "Minecraft pathfinding: A* na siatce 2D",
     "IoTRoomScene": "Pokój IoT: 3D mapa infrastruktury (serwery, statusy i obciążenie w jednym widoku)",
-    "galaxy": "Galaktyka: Generator cząsteczek"
+    "galaxy": "Galaktyka: Generator cząsteczek",
+    "spaceHub": "Space Hub: interaktywny wybór",
+    "projectHub": "3D Project Hub: portfolio / systemy"
   },
   "tooltips": {
     "instanceColors": "Kolor per instancja: każda kopia może mieć inny kolor, ale nadal renderujemy jednym draw callem (Instanced), bo kolor jest atrybutem, nie osobnym materiałem.",

@@ -17,7 +17,10 @@
     "modelConvertViewer": "3D Viewer & Converter (client-only)",
     "minecraftDudeExample": "Minecraft-style dude: 3rd-person controller",
     "minecraftPathfinding": "Minecraft pathfinding: A* grid navigation",
-    "IoTRoomScene": "IoT room: 3D infrastructure map"
+    "IoTRoomScene": "IoT room: 3D infrastructure map",
+    "galaxy": "Galaxy: Particle generator",
+    "spaceHub": "Space Hub: interactive selection",
+    "projectHub": "3D Project Hub: portfolio / systems"
   },
   "tooltips": {
     "instanceColors": "Give each copy its own color without new materials — in Instanced mode draw calls stay ≈ 1.",
