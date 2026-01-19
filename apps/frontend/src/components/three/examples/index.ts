@@ -11,7 +11,8 @@ export type ExampleKey =
   | "minecraftDudeExample"
   | "minecraftPathfinding"
   | "IoTRoomScene"
-  | "galaxy";
+  | "galaxy"
+  | "spaceHub";
 
 export const EXAMPLE_LABELS: Record<ExampleKey, string> = {
   projectHub: "3D Project Hub: portfolio / systemy",
@@ -27,4 +28,5 @@ export const EXAMPLE_LABELS: Record<ExampleKey, string> = {
   minecraftPathfinding: "Minecraft pathfinding (A*)",
   IoTRoomScene: "IoT room: 3D mapa infrastruktury",
   galaxy: "Galaktyka: Generator cząsteczek",
+  spaceHub: "Space Hub: interaktywny wybór",
 };

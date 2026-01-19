@@ -1,31 +1,31 @@
 export function makeTiles(locale: "pl" | "en", t: (key: string) => string) {
   return [
     {
-      href: "/interview-prep/login-sso",
+      href: "/login-sso",
       title: `🔐 ${t("interview-prep.sso.title") || "SSO Login Flow"}`,
       description:
         t("interview-prep.sso.desc") ||
         "Authorization Code + PKCE krok po kroku.",
     },
     {
-      href: "/interview-prep/tree-demo",
+      href: "/tree-demo",
       title: `🧠 ${t("interview-prep.recursion.title")}`,
       description: t("interview-prep.recursion.desc"),
     },
     {
-      href: "/interview-prep/filesystem",
+      href: "/filesystem",
       title: `📁 ${t("interview-prep.filesystem.title")}`,
       description: t("interview-prep.filesystem.desc"),
     },
     {
-      href: "/interview-prep/web-storage",
+      href: "/web-storage",
       title: `🍪 ${t("interview-prep.storage.title") || "Storage & Cookies"}`,
       description:
         t("interview-prep.storage.desc") ||
         "Hands-on: localStorage vs sessionStorage vs cookies",
     },
     {
-      href: "/interview-prep/threejs",
+      href: "/threejs",
       title: `🌀 ${t("interview-prep.three.title")}`,
       description: t("interview-prep.three.desc"),
     },
@@ -42,7 +42,7 @@ export function makeTiles(locale: "pl" | "en", t: (key: string) => string) {
           : "Most common questions with examples."),
     },
     {
-      href: "/interview-prep/abortable-search",
+      href: "/abortable-search",
       title: `⏹️ ${
         t("interview-prep.abort.title") ||
         (locale === "pl"
@@ -56,7 +56,7 @@ export function makeTiles(locale: "pl" | "en", t: (key: string) => string) {
           : "Demo: debounce, fetch cancellation and a Stop button."),
     },
     {
-      href: "/interview-prep/form-example",
+      href: "/form-example",
       title: `💬 ${t("interview-prep.form.title")}`,
       description: t("interview-prep.form.desc"),
     },
