@@ -6,40 +6,34 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import type { Model, ClickInfo, HousePaintMode } from "./types";
+import type { Model, ClickInfo, PaintMode } from "./types";
 
 export type ControlsProps = {
   model: Model;
   setModel: (m: Model) => void;
-
   targetColor: string;
   setTargetColor: (c: string) => void;
-
-  showModalOnClick: boolean;
-  setShowModalOnClick: (v: boolean) => void;
-
+  showModal: boolean;
+  setShowModal: (v: boolean) => void;
   // House only
   brushRadius: number;
   setBrushRadius: (n: number) => void;
-  houseRotationDeg: number;
-  setHouseRotationDeg: (deg: number) => void;
-  housePaintMode: HousePaintMode;
-  setHousePaintMode: (m: HousePaintMode) => void;
-
+  rotDeg: number;
+  setRotDeg: (deg: number) => void;
+  paintMode: PaintMode;
+  setPaintMode: (m: PaintMode) => void;
   selected: ClickInfo;
 };
 
 export default function Controls({
   model, setModel,
   targetColor, setTargetColor,
-  showModalOnClick, setShowModalOnClick,
+  showModal, setShowModal,
   brushRadius, setBrushRadius,
-  houseRotationDeg, setHouseRotationDeg,
-  housePaintMode, setHousePaintMode,
+  rotDeg, setRotDeg,
+  paintMode, setPaintMode,
   selected,
 }: ControlsProps) {
-
-  // Popover z potwierdzeniem koloru
   const [pickerOpen, setPickerOpen] = useState(false);
   const [draftColor, setDraftColor] = useState(targetColor);
 
@@ -57,7 +51,6 @@ export default function Controls({
         <Button onClick={() => setModel("house")} variant={model === "house" ? "default" : "secondary"}>House</Button>
       </div>
 
-      {/* Kolor z przyciskiem Zastosuj */}
       <div className="flex items-center justify-between">
         <Label>Kolor</Label>
         <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
@@ -72,7 +65,6 @@ export default function Controls({
               <span className="text-sm">Podgląd</span>
               <span className="inline-block h-4 w-6 rounded border" style={{ background: draftColor }} />
             </div>
-            {/* prosto i bez zależności – natywne color input */}
             <input
               type="color"
               value={draftColor}
@@ -89,30 +81,21 @@ export default function Controls({
 
       {model === "house" && (
         <>
-          {/* Paint mode */}
           <div className="flex items-center gap-2">
-            <Button
-              onClick={() => setHousePaintMode("fill")}
-              variant={housePaintMode === "fill" ? "default" : "secondary"}
-            >
+            <Button onClick={() => setPaintMode("fill")} variant={paintMode === "fill" ? "default" : "secondary"}>
               Fill (cała ściana)
             </Button>
-            <Button
-              onClick={() => setHousePaintMode("brush")}
-              variant={housePaintMode === "brush" ? "default" : "secondary"}
-            >
+            <Button onClick={() => setPaintMode("brush")} variant={paintMode === "brush" ? "default" : "secondary"}>
               Brush
             </Button>
           </div>
 
-          {/* Rotation */}
           <div>
-            <div className="text-sm mb-1">Rotation (°): {houseRotationDeg}</div>
-            <Slider value={[houseRotationDeg]} min={0} max={360} step={1} onValueChange={(v) => setHouseRotationDeg(v[0])} />
+            <div className="text-sm mb-1">Rotation (°): {rotDeg}</div>
+            <Slider value={[rotDeg]} min={0} max={360} step={1} onValueChange={(v) => setRotDeg(v[0])} />
           </div>
 
-          {/* Brush radius only for Brush mode */}
-          {housePaintMode === "brush" && (
+          {paintMode === "brush" && (
             <div>
               <div className="text-sm mb-1">Brush radius: {brushRadius}px</div>
               <Slider value={[brushRadius]} min={4} max={128} step={2} onValueChange={(v) => setBrushRadius(v[0])} />
@@ -123,7 +106,7 @@ export default function Controls({
 
       <div className="flex items-center justify-between">
         <Label htmlFor="modal">Pokaż modal po kliknięciu</Label>
-        <Switch id="modal" checked={showModalOnClick} onCheckedChange={setShowModalOnClick} />
+        <Switch id="modal" checked={showModal} onCheckedChange={setShowModal} />
       </div>
 
       <div>

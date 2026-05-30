@@ -4,104 +4,59 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from "@/components/ui/select";
 import { EXAMPLE_LABELS, type ExampleKey } from "./examples";
 
-const Minimal = dynamic(() => import("./examples/Minimal"), { ssr: false });
-const Raycast = dynamic(() => import("./examples/Raycast"), { ssr: false });
-const Shader = dynamic(() => import("./examples/Shader/index"), { ssr: false });
-const Instanced = dynamic(() => import("./examples/Instanced"), { ssr: false });
-const LOD = dynamic(() => import("./examples/LOD"), { ssr: false });
-const BrushRipple = dynamic(() => import("./examples/BrushRipple"), {
-  ssr: false,
-});
-const GaussianSplatDemo = dynamic(
-  () => import("./examples/GaussianSplatDemo"),
-  { ssr: false },
-);
-const ModelConvertViewer = dynamic(
-  () => import("./examples/ModelConvertViewer"),
-  { ssr: false },
-);
-const MinecraftDudeExample = dynamic(() => import("./examples/MinecraftDude"), {
-  ssr: false,
-});
-const MinecraftPathfindingDemo = dynamic(
-  () => import("./examples/MinecraftPathfindingDemo"),
-  { ssr: false },
-);
-const IoTRoomScene = dynamic(() => import("./examples/IoTRoomScene"), {
-  ssr: false,
-});
-const ProjectHub3D = dynamic(() => import("./examples/ProjectHub3D"), {
-  ssr: false,
-});
-const Galaxy = dynamic(() => import("./examples/Galaxy"), { ssr: false });
-const SpaceHub3D = dynamic(() => import("./examples/SpaceHub3D"), {
-  ssr: false,
-});
+const Minimal      = dynamic(() => import("./examples/Minimal"),                  { ssr: false });
+const Raycast      = dynamic(() => import("./examples/Raycast"),                  { ssr: false });
+const Shader       = dynamic(() => import("./examples/Shader/index"),             { ssr: false });
+const Instanced    = dynamic(() => import("./examples/Instanced"),                { ssr: false });
+const LOD          = dynamic(() => import("./examples/LOD"),                      { ssr: false });
+const BrushRipple  = dynamic(() => import("./examples/BrushRipple"),             { ssr: false });
+const GaussianSplat = dynamic(() => import("./examples/GaussianSplatDemo"),      { ssr: false });
+const Converter    = dynamic(() => import("./examples/ModelConvertViewer"),       { ssr: false });
+const Minecraft    = dynamic(() => import("./examples/MinecraftDude"),            { ssr: false });
+const Pathfinding  = dynamic(() => import("./examples/MinecraftPathfindingDemo"), { ssr: false });
+const IoTRoom      = dynamic(() => import("./examples/IoTRoomScene"),             { ssr: false });
+const ProjectHub3D = dynamic(() => import("./examples/ProjectHub3D"),             { ssr: false });
+const Galaxy       = dynamic(() => import("./examples/Galaxy"),                   { ssr: false });
+const SpaceHub3D   = dynamic(() => import("./examples/SpaceHub3D"),              { ssr: false });
 
 const EXAMPLE_KEYS: ExampleKey[] = [
-  "spaceHub",
-  "projectHub",
-  "galaxy",
-  "raycast",
-  "shader",
-  "instanced",
-  "LOD",
-  "brushripple",
-  "gaussianSplatDemo",
-  "modelConvertViewer",
-  "minecraftDudeExample",
-  "minecraftPathfinding",
-  "IoTRoomScene",
-  "minimal",
+  "spaceHub", "projectHub", "galaxy", "raycast", "shader", "instanced",
+  "LOD", "brushripple", "gaussianSplat", "converter", "minecraft",
+  "pathfinding", "iotRoom", "minimal",
 ];
+
+type Cmp = React.ComponentType;
+const COMPONENTS: Partial<Record<ExampleKey, Cmp>> = {
+  projectHub: ProjectHub3D,
+  galaxy:     Galaxy,
+  raycast:    Raycast,
+  shader:     Shader,
+  instanced:  Instanced,
+  LOD,
+  brushripple:   BrushRipple,
+  gaussianSplat: GaussianSplat,
+  converter:     Converter,
+  minecraft:     Minecraft,
+  pathfinding:   Pathfinding,
+  iotRoom:       IoTRoom,
+  minimal:       Minimal,
+};
 
 export default function ThreeLabShowcase() {
   const locale = useLocale();
   const t = useTranslations();
   const [key, setKey] = useState<ExampleKey>("spaceHub");
 
-  const Current = useMemo(() => {
-    switch (key) {
-      case "spaceHub":
-        return function SpaceHubWrapper() {
-          return <SpaceHub3D onSelect={setKey} />;
-        };
-      case "projectHub":
-        return ProjectHub3D;
-      case "galaxy":
-        return Galaxy;
-      case "raycast":
-        return Raycast;
-      case "shader":
-        return Shader;
-      case "instanced":
-        return Instanced;
-      case "LOD":
-        return LOD;
-      case "brushripple":
-        return BrushRipple;
-      case "gaussianSplatDemo":
-        return GaussianSplatDemo;
-      case "modelConvertViewer":
-        return ModelConvertViewer;
-      case "minecraftDudeExample":
-        return MinecraftDudeExample;
-      case "minecraftPathfinding":
-        return MinecraftPathfindingDemo;
-      case "IoTRoomScene":
-        return IoTRoomScene;
-      default:
-        return Minimal;
-    }
-  }, [key]);
+  const Current = useMemo<Cmp>(
+    () => key === "spaceHub"
+      ? () => <SpaceHub3D onSelect={setKey} />
+      : (COMPONENTS[key] ?? Minimal),
+    [key],
+  );
 
   const labelFor = (k: ExampleKey) => {
     const trans = t(`example.${k}`);
@@ -126,8 +81,7 @@ export default function ThreeLabShowcase() {
               className="px-4 py-2 rounded-lg bg-sky-500/10 text-sky-500 border border-sky-500/20 hover:bg-sky-500 hover:text-white transition-all text-sm font-medium"
             >
               ←{" "}
-              {t("lab.backToHub") ||
-                (locale === "pl" ? "Wróć do Hubu" : "Back to Hub")}
+              {t("lab.backToHub") || (locale === "pl" ? "Wróć do Hubu" : "Back to Hub")}
             </button>
           )}
           <div className="w-64">
@@ -146,6 +100,7 @@ export default function ThreeLabShowcase() {
           </div>
         </div>
       </div>
+
       <AnimatePresence mode="wait">
         <motion.div
           key={key}
@@ -157,19 +112,6 @@ export default function ThreeLabShowcase() {
           <Current />
         </motion.div>
       </AnimatePresence>
-
-      {/* <Card>
-        <CardHeader>
-          <CardTitle>{t("tips.extend")}</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground space-y-2">
-          <ul className="list-disc ml-6">
-            <li><b>glTF</b>: loader GLTFLoader + public/model.gltf</li>
-            <li><b>Postprocessing</b>: EffectComposer + Bloom</li>
-            <li><b>Fizyka</b>: cannon-es</li>
-          </ul>
-        </CardContent>
-      </Card> */}
     </div>
   );
 }

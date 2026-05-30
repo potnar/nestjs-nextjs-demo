@@ -2,117 +2,76 @@
 import * as THREE from "three";
 import { useEffect, useMemo, useRef, useCallback } from "react";
 import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { useThreeCanvas } from "@/components/three/useThreeCanvas";
+import { useThreeCanvas, type ThreeCtx } from "@/components/three/useThreeCanvas";
+import { usePropRef } from "@/components/three/usePropRef";
+import { disposeGroup, makeEwmaFps } from "@/lib/three";
 import { buildCubes } from "./models/cubes";
 import { buildHouse } from "./models/house";
-import type {
-  Model,
-  ClickInfo,
-  BuildCtx,
-  PaintWall,
-  HousePaintMode,
-} from "./types";
+import type { Model, ClickInfo, PaintWall, PaintMode } from "./types";
 import { paintDot, fillCanvas } from "./painting";
 
 export type CanvasProps = {
   className?: string;
   model: Model;
-
-  // House controls
-  houseRotationDeg: number; // obrót całego domku (°)
-  housePaintMode: HousePaintMode; // "fill" | "brush"
-  brushRadius: number; // px (dla Brush)
-
-  // Shared
+  rotDeg: number;
+  paintMode: PaintMode;
+  brushRadius: number;
   targetColor: string;
-  showModalOnClick: boolean;
-
+  showModal: boolean;
   onSelect: (info: ClickInfo) => void;
   onOpenModal: () => void;
   onFps?: (fps: number) => void;
-
-  children?: React.ReactNode; // HUD overlay
+  children?: React.ReactNode;
 };
 
 export default function Canvas({
   className,
   model,
   targetColor,
-  houseRotationDeg,
-  housePaintMode,
+  rotDeg,
+  paintMode,
   brushRadius,
-  showModalOnClick,
+  showModal,
   onSelect,
   onOpenModal,
   onFps,
   children,
 }: CanvasProps) {
-  // core
   const raycaster = useMemo(() => new THREE.Raycaster(), []);
   const mouse = useMemo(() => new THREE.Vector2(), []);
   const isDownRef = useRef(false);
   const startXYRef = useRef<{ x: number; y: number } | null>(null);
   const movedRef = useRef(false);
 
-  // scene
   const groupRef = useRef<THREE.Group | null>(null);
   const pickablesRef = useRef<THREE.Object3D[]>([]);
   const wallsRef = useRef<PaintWall[]>([]);
-  const controlsRef = useRef<OrbitControls | null>(null); // ✔ konkretny typ
-  const frameRef = useRef<BuildCtx["frame"] | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
+  const frameRef = useRef<ThreeCtx["frame"] | null>(null);
 
-  const fpsAvgRef = useRef(0);
-  const fpsTRef = useRef(0);
+  const targetColorRef = usePropRef(targetColor);
+  const showModalRef   = usePropRef(showModal);
+  const brushRadiusRef = usePropRef(brushRadius);
+  const paintModeRef   = usePropRef(paintMode);
+  const kindRef        = useRef<Model>(model);
 
-  // props → refs
-  const targetColorRef = useRef(targetColor);
-  const showModalRef = useRef(showModalOnClick);
-  const kindRef = useRef<Model>(model);
-  const brushRadiusRef = useRef(brushRadius);
-  const paintModeRef = useRef<HousePaintMode>(housePaintMode);
-  const houseRotRef = useRef(houseRotationDeg);
-
+  const rotDegRef = useRef(rotDeg);
   useEffect(() => {
-    targetColorRef.current = targetColor;
-  }, [targetColor]);
-  useEffect(() => {
-    showModalRef.current = showModalOnClick;
-  }, [showModalOnClick]);
-  useEffect(() => {
-    brushRadiusRef.current = brushRadius;
-  }, [brushRadius]);
-  useEffect(() => {
-    paintModeRef.current = housePaintMode;
-  }, [housePaintMode]);
-  useEffect(() => {
-    houseRotRef.current = houseRotationDeg;
+    rotDegRef.current = rotDeg;
     if (groupRef.current)
-      groupRef.current.rotation.y = THREE.MathUtils.degToRad(houseRotationDeg);
-  }, [houseRotationDeg]);
+      groupRef.current.rotation.y = THREE.MathUtils.degToRad(rotDeg);
+  }, [rotDeg]);
 
-  // helper: czytaj idx bez 'any'
   const getIdx = (obj: THREE.Object3D) => {
     const u = obj.userData as { idx?: number } | undefined;
     return typeof u?.idx === "number" ? u.idx : -1;
   };
 
-  // zbuduj aktualny model (memoizowane)
   const build = useCallback((kind: Model) => {
     const group = groupRef.current;
     if (!group) return;
-
-    // cleanup
     while (group.children.length) {
-      const o = group.children.pop()!;
-      o.traverse((node) => {
-        if ((node as THREE.Mesh).isMesh) {
-          const m = node as THREE.Mesh;
-          m.geometry?.dispose();
-          const mat = m.material as THREE.Material | THREE.Material[];
-          if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
-          else mat?.dispose?.();
-        }
-      });
+      disposeGroup(group.children.pop()!);
     }
     pickablesRef.current = [];
     wallsRef.current = [];
@@ -127,28 +86,24 @@ export default function Canvas({
     }
   }, []);
 
-  // przebuduj + ponownie wykadruj (memoizowane)
   const rebuild = useCallback(() => {
     const kind = kindRef.current;
     build(kind);
-    // re-frame po przebudowie (większy offset dla domku)
     if (frameRef.current && groupRef.current) {
       frameRef.current(groupRef.current, { offset: kind === "house" ? 2.4 : 1.6 });
     }
     if (kind === "house" && groupRef.current) {
-      groupRef.current.rotation.y = THREE.MathUtils.degToRad(houseRotRef.current);
+      groupRef.current.rotation.y = THREE.MathUtils.degToRad(rotDegRef.current);
     }
   }, [build]);
 
-  // zmiana modelu -> rebuild (✔ dependency)
   useEffect(() => {
     kindRef.current = model;
     rebuild();
   }, [model, rebuild]);
 
-  // mount hook
   const mountRef = useThreeCanvas({
-    onBuild: ({ scene, camera, renderer, controls, frame }: BuildCtx) => {
+    onBuild: ({ scene, camera, renderer, controls, frame }: ThreeCtx) => {
       scene.background = new THREE.Color(0x0b1020);
       scene.add(new THREE.GridHelper(60, 60, 0x2a2f3b, 0x1a1e28));
       const amb = new THREE.AmbientLight(0xffffff, 0.6);
@@ -167,13 +122,9 @@ export default function Canvas({
       scene.add(group);
 
       build(kindRef.current);
-      // początkowy obrót domku (jeśli House)
-      group.rotation.y = THREE.MathUtils.degToRad(houseRotRef.current);
-
-      // pierwszy kadr — większy offset dla House
+      group.rotation.y = THREE.MathUtils.degToRad(rotDegRef.current);
       frame(group, { offset: kindRef.current === "house" ? 2.4 : 1.6 });
 
-      // pointer handlers
       const updateNDC = (ev: PointerEvent) => {
         const r = (renderer.domElement as HTMLCanvasElement).getBoundingClientRect();
         mouse.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
@@ -192,45 +143,31 @@ export default function Canvas({
           if (!hit) return;
           const mesh = hit.object as THREE.Mesh;
           const mat = mesh.material as THREE.MeshStandardMaterial;
-          try {
-            mat.color.set(targetColorRef.current);
-          } catch {}
-          onSelect({
-            name: mesh.name || mesh.uuid.slice(0, 8),
-            index: getIdx(mesh),
-          });
+          try { mat.color.set(targetColorRef.current); } catch {}
+          onSelect({ name: mesh.name || mesh.uuid.slice(0, 8), index: getIdx(mesh) });
           if (showModalRef.current) onOpenModal();
         } else {
           if (paintModeRef.current === "brush") {
             if (controlsRef.current) controlsRef.current.enabled = false;
             paintWallAtRay();
-          } // w trybie fill robimy to w onUp (klik bez ruchu)
+          }
         }
       };
 
       const onMove = (e: PointerEvent) => {
         updateNDC(e);
-        // wykryj ruch (dla rozróżnienia klik vs drag)
         if (startXYRef.current) {
           const dx = e.clientX - startXYRef.current.x;
           const dy = e.clientY - startXYRef.current.y;
           if (Math.hypot(dx, dy) > 3) movedRef.current = true;
         }
-        if (
-          isDownRef.current &&
-          kindRef.current === "house" &&
-          paintModeRef.current === "brush"
-        ) {
+        if (isDownRef.current && kindRef.current === "house" && paintModeRef.current === "brush") {
           paintWallAtRay();
         }
       };
 
       const onUp = () => {
-        if (
-          kindRef.current === "house" &&
-          paintModeRef.current === "fill" &&
-          !movedRef.current
-        ) {
+        if (kindRef.current === "house" && paintModeRef.current === "fill" && !movedRef.current) {
           fillWallAtRay();
         }
         isDownRef.current = false;
@@ -242,33 +179,16 @@ export default function Canvas({
       renderer.domElement.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
 
+      const trackFps = makeEwmaFps(onFps);
+
       return {
-        onFrame: (dt: number) => {
-          const now = 1 / Math.max(1e-6, dt);
-          fpsAvgRef.current = fpsAvgRef.current
-            ? fpsAvgRef.current * 0.9 + now * 0.1
-            : now;
-          fpsTRef.current += dt;
-          if (fpsTRef.current > 0.25) {
-            fpsTRef.current = 0;
-            onFps?.(Math.round(fpsAvgRef.current));
-          }
-        },
+        onFrame: (dt: number) => { trackFps(dt); },
         dispose: () => {
           renderer.domElement.removeEventListener("pointerdown", onDown);
           renderer.domElement.removeEventListener("pointermove", onMove);
           window.removeEventListener("pointerup", onUp);
-
           if (groupRef.current) {
-            groupRef.current.traverse((node) => {
-              if ((node as THREE.Mesh).isMesh) {
-                const m = node as THREE.Mesh;
-                m.geometry?.dispose();
-                const mat = m.material as THREE.Material | THREE.Material[];
-                if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
-                else mat?.dispose?.();
-              }
-            });
+            disposeGroup(groupRef.current);
             scene.remove(groupRef.current);
             groupRef.current = null;
           }
@@ -282,14 +202,11 @@ export default function Canvas({
     const walls = wallsRef.current.map((w) => w.mesh);
     const hit = raycaster.intersectObjects(walls, false)[0];
     if (!hit || !hit.uv) return;
-
     const wall = wallsRef.current.find((w) => w.mesh === hit.object)!;
     const px = Math.floor(hit.uv.x * wall.canvas.width);
     const py = Math.floor((1 - hit.uv.y) * wall.canvas.height);
-
     paintDot(wall.ctx, px, py, brushRadiusRef.current, targetColorRef.current);
     wall.tex.needsUpdate = true;
-
     onSelect({ name: wall.name, index: getIdx(wall.mesh) });
   }
 
@@ -298,10 +215,8 @@ export default function Canvas({
     const hit = raycaster.intersectObjects(walls, false)[0];
     if (!hit) return;
     const wall = wallsRef.current.find((w) => w.mesh === hit.object)!;
-
     fillCanvas(wall.ctx, targetColorRef.current);
     wall.tex.needsUpdate = true;
-
     onSelect({ name: wall.name, index: getIdx(wall.mesh) });
   }
 

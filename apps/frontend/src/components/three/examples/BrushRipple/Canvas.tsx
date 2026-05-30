@@ -2,6 +2,8 @@
 import * as THREE from "three";
 import { PropsWithChildren, useEffect, useRef } from "react";
 import { useThreeCanvas } from "@/components/three/useThreeCanvas";
+import { usePropRef } from "@/components/three/usePropRef";
+import { makeEwmaFps } from "@/lib/three";
 import { HeightField } from "@/lib/heightField";
 import { applyBrush } from "@/lib/brush";
 
@@ -28,17 +30,12 @@ export default function BrushRippleCanvas({
 
   const isDownRef = useRef(false);
   const raycaster = useRef(new THREE.Raycaster());
-  const ndc = useRef(new THREE.Vector2());
-  const fpsAvgRef = useRef(0); const fpsTRef = useRef(0);
+  const ndc       = useRef(new THREE.Vector2());
 
-  const radiusRef = useRef(radius);
-  const strengthRef = useRef(strength);
-  const dampingRef = useRef(damping);
-  const modeRef = useRef<Mode>(mode);
-  useEffect(()=>{ radiusRef.current = radius; }, [radius]);
-  useEffect(()=>{ strengthRef.current = strength; }, [strength]);
-  useEffect(()=>{ dampingRef.current = damping; }, [damping]);
-  useEffect(()=>{ modeRef.current = mode; }, [mode]);
+  const radiusRef   = usePropRef(radius);
+  const strengthRef = usePropRef(strength);
+  const dampingRef  = usePropRef(damping);
+  const modeRef     = usePropRef(mode);
 
   const mountRef = useThreeCanvas({
     onBuild: ({ scene, camera, controls, renderer, frame }) => {
@@ -51,7 +48,6 @@ export default function BrushRippleCanvas({
       camera.position.set(0, 10, 18);
       controls.target.set(0, 0, 0); controls.update();
 
-      // Plane + HeightField
       const res = 128, size = 30;
       const geom = new THREE.PlaneGeometry(size, size, res, res);
       geom.rotateX(-Math.PI / 2);
@@ -67,7 +63,6 @@ export default function BrushRippleCanvas({
       const hf = new HeightField(res, size, geom);
       hfRef.current = hf;
 
-      // Ring (podgląd promienia)
       const ring = new THREE.Mesh(
         new THREE.RingGeometry(0.98, 1.0, 64),
         new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, side: THREE.DoubleSide })
@@ -75,7 +70,6 @@ export default function BrushRippleCanvas({
       ring.rotation.x = -Math.PI / 2; ring.visible = false;
       ringRef.current = ring; scene.add(ring);
 
-      // Pointer → raycast + pędzel
       const updatePointer = (ev: PointerEvent) => {
         const rect = renderer.domElement.getBoundingClientRect();
         ndc.current.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
@@ -93,25 +87,21 @@ export default function BrushRippleCanvas({
         }
       };
       const onDown = (e: PointerEvent) => { isDownRef.current = true; controls.enabled = false; updatePointer(e); };
-      const onUp = () => { isDownRef.current = false; controls.enabled = true; };
+      const onUp   = () => { isDownRef.current = false; controls.enabled = true; };
 
       renderer.domElement.addEventListener("pointermove", updatePointer);
       renderer.domElement.addEventListener("pointerdown", onDown);
       window.addEventListener("pointerup", onUp);
 
       frame(plane, { offset: 1.45 });
-
       onReady?.({ reset: () => hf.reset() });
+
+      const trackFps = makeEwmaFps(onFps);
 
       return {
         onFrame: (dt: number) => {
-          hf.step(dt, dampingRef.current); // fizyka + aktualizacja geometrii
-
-          // FPS
-          const now = 1 / Math.max(1e-6, dt);
-          fpsAvgRef.current = fpsAvgRef.current ? fpsAvgRef.current * 0.9 + now * 0.1 : now;
-          fpsTRef.current += dt;
-          if (fpsTRef.current > 0.25) { fpsTRef.current = 0; onFps?.(Math.round(fpsAvgRef.current)); }
+          hf.step(dt, dampingRef.current);
+          trackFps(dt);
         },
         dispose: () => {
           renderer.domElement.removeEventListener("pointermove", updatePointer);
@@ -122,16 +112,14 @@ export default function BrushRippleCanvas({
     },
   });
 
-  // UI → wireframe
   useEffect(() => {
-    if (planeRef.current) {
+    if (planeRef.current)
       (planeRef.current.material as THREE.MeshStandardMaterial).wireframe = wire;
-    }
   }, [wire]);
 
   return (
     <div className={className} ref={mountRef}>
-      {children /* HUD overlay z rodzica */}
+      {children}
     </div>
   );
 }
