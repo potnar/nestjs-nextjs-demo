@@ -1,6 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
-import { useState, useMemo } from "react";
+import { useMemo, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -46,16 +47,31 @@ const COMPONENTS: Partial<Record<ExampleKey, Cmp>> = {
   minimal:       Minimal,
 };
 
-export default function ThreeLabShowcase() {
+function isValidKey(v: string | null): v is ExampleKey {
+  return !!v && EXAMPLE_KEYS.includes(v as ExampleKey);
+}
+
+function ThreeLabInner() {
   const locale = useLocale();
   const t = useTranslations();
-  const [key, setKey] = useState<ExampleKey>("spaceHub");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const raw = searchParams.get("e");
+  const key: ExampleKey = isValidKey(raw) ? raw : "spaceHub";
+
+  const setKey = useCallback((next: ExampleKey) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "spaceHub") params.delete("e");
+    else params.set("e", next);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [router, searchParams]);
 
   const Current = useMemo<Cmp>(
     () => key === "spaceHub"
       ? () => <SpaceHub3D onSelect={setKey} />
       : (COMPONENTS[key] ?? Minimal),
-    [key],
+    [key, setKey],
   );
 
   const labelFor = (k: ExampleKey) => {
@@ -113,5 +129,13 @@ export default function ThreeLabShowcase() {
         </motion.div>
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function ThreeLabShowcase() {
+  return (
+    <Suspense>
+      <ThreeLabInner />
+    </Suspense>
   );
 }
