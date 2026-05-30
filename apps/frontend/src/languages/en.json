@@ -46,10 +46,6 @@
   "home": {
     "version": "Version {ver}",
     "tiles": {
-      "weight": {
-        "title": "Weight tracking",
-        "desc": "Log your weight and see the trend"
-      },
       "interview": {
         "title": "Interview prep",
         "desc": "Questions and visual examples: Three.js, React, Next.js, NestJS"

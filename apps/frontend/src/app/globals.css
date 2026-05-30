@@ -128,3 +128,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+:root {
+  --sand: #C9B896;
+  --sand-muted: rgba(201,184,150,0.55);
+  --card-glass: rgba(255,255,255,0.07);
+  --card-glass-border: rgba(201,184,150,0.25);
+}

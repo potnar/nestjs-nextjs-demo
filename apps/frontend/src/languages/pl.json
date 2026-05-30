@@ -47,10 +47,6 @@
   "home": { 
     "version": "Wersja {ver}",
     "tiles": {
-      "weight": {
-        "title": "Monitorowanie wagi",
-        "desc": "Zapisuj wagę i śledź wykres"
-      },
       "interview": {
         "title": "Przygotowanie do rozmowy",
         "desc": "Pytania i wizualne przykłady: Three.js, React, Next.js, NestJS"

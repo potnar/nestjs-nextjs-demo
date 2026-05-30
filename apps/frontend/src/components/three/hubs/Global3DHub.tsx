@@ -66,13 +66,6 @@ const HUB_NODES: HubNodeData[] = [
     category: "tool",
   },
   {
-    id: "weight",
-    label: "Weight",
-    href: "/weight",
-    color: "#a78bfa",
-    category: "tool",
-  },
-  {
     id: "storage",
     label: "Storage",
     href: "/web-storage",
