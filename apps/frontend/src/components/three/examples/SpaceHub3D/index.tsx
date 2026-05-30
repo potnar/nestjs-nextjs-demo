@@ -9,7 +9,6 @@ import {
   Points,
   PointMaterial,
   Stars,
-  PerspectiveCamera,
   Environment,
 } from "@react-three/drei";
 import * as THREE from "three";
@@ -302,7 +301,6 @@ function GalaxyBackground() {
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      const theta = 2 * Math.PI * Math.random();
       const r = 30 + Math.random() * 30;
       const arms = 4;
       const armIndex = Math.floor(Math.random() * arms);

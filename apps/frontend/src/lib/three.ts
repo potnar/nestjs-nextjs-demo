@@ -6,7 +6,8 @@ export function disposeGroup(obj: THREE.Object3D) {
     const m = node as THREE.Mesh;
     m.geometry?.dispose();
     const mat = m.material as THREE.Material | THREE.Material[];
-    Array.isArray(mat) ? mat.forEach((x) => x.dispose()) : mat?.dispose?.();
+    if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
+    else mat?.dispose?.();
   });
 }
 
