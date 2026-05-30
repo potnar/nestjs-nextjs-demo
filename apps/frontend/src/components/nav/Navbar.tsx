@@ -26,7 +26,6 @@ export default function Navbar() {
     { href: "/3d-hub", labelPL: "3D Hub 🌌", labelEN: "3D Hub 🌌" },
     { href: "/threejs", labelPL: "3D Lab", labelEN: "3D Lab" },
     { href: "/typescript/faq", labelPL: "TS FAQ", labelEN: "TS FAQ" },
-    { href: "/weight", labelPL: "Waga", labelEN: "Weight" },
   ];
 
   const labLinks: NavLink[] = [
@@ -45,7 +44,7 @@ export default function Navbar() {
   const isActive = (href: string) => pathname === (href === "/" ? "/" : href);
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-900">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         {/* Left: logo */}
         <Link href="/" className="font-semibold">
